@@ -6,6 +6,7 @@
 
 Base classes for ensemble layer management.
 """
+
 # pylint: disable=protected-access
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-instance-attributes
@@ -20,12 +21,21 @@ from .. import config
 from ..parallel import Layer, ParallelProcessing, make_group
 from ..parallel.base import BaseStacker
 from ..externals.sklearn.validation import check_random_state
-from ..utils import (check_ensemble_build, print_time,
-                     safe_print, IdTrain, format_name)
+from ..utils import (
+    check_ensemble_build,
+    print_time,
+    safe_print,
+    IdTrain,
+    format_name,
+)
 from ..utils.exceptions import (
-    LayerSpecificationWarning, NotFittedError, NotInitializedError)
+    LayerSpecificationWarning,
+    NotFittedError,
+    NotInitializedError,
+)
 from ..metrics import Data
 from ..externals.sklearn.base import BaseEstimator, clone
+
 try:
     # Try get performance counter
     from time import perf_counter as time
@@ -45,7 +55,8 @@ def check_kwargs(kwargs, forbidden):
             warnings.warn(
                 "Layer-specific parameter '%s' contradicts"
                 "ensemble-wide settings. Ignoring." % f,
-                LayerSpecificationWarning)
+                LayerSpecificationWarning,
+            )
 
 
 def print_job(lc, start_message):
@@ -61,15 +72,27 @@ def print_job(lc, start_message):
     """
     f = "stdout" if lc.verbose < 10 else "stderr"
     if lc.verbose:
-        safe_print("\n%s %d layers" % (start_message, len(lc.stack)),
-                   file=f, flush=True)
+        safe_print(
+            "\n%s %d layers" % (start_message, len(lc.stack)),
+            file=f,
+            flush=True,
+        )
         if lc.verbose >= 5:
-            safe_print("""[INFO] n_jobs = %i
+            safe_print(
+                """[INFO] n_jobs = %i
 [INFO] backend = %r
 [INFO] start_method = %r
 [INFO] cache = %r
-""" % (lc.n_jobs, lc.backend, config.get_start_method(), config.get_tmpdir()),
-                       file=f, flush=True)
+"""
+                % (
+                    lc.n_jobs,
+                    lc.backend,
+                    config.get_start_method(),
+                    config.get_tmpdir(),
+                ),
+                file=f,
+                flush=True,
+            )
 
     t0 = time()
     return f, t0
@@ -77,7 +100,6 @@ def print_job(lc, start_message):
 
 ###############################################################################
 class Sequential(BaseStacker):
-
     r"""Container class for a stack of sequentially processed estimators.
 
     The Sequential class stories all layers as an ordered dictionary
@@ -115,16 +137,18 @@ class Sequential(BaseStacker):
 
     def __init__(self, name=None, verbose=False, stack=None, **kwargs):
         if stack and not isinstance(stack, list):
-            if stack.__class__.__name__.lower() == 'layer':
+            if stack.__class__.__name__.lower() == "layer":
                 stack = [stack]
             else:
                 raise ValueError(
                     "Expect stack to be a Layer or a list of Layers. "
-                    "Got %r" % stack)
+                    "Got %r" % stack
+                )
 
-        name = format_name(name, 'sequential', GLOBAL_SEQUENTIAL_NAME)
+        name = format_name(name, "sequential", GLOBAL_SEQUENTIAL_NAME)
         super(Sequential, self).__init__(
-            stack=stack, name=name, verbose=verbose, **kwargs)
+            stack=stack, name=name, verbose=verbose, **kwargs
+        )
 
     def __iter__(self):
         """Generator for stacked layers"""
@@ -147,15 +171,16 @@ class Sequential(BaseStacker):
 
         **kwargs : optional
             optional arguments to processor
-       """
+        """
         if not self.__stack__:
             raise NotInitializedError("No elements in stack to fit.")
 
         f, t0 = print_job(self, "Fitting")
 
-        with ParallelProcessing(self.backend, self.n_jobs,
-                                max(self.verbose - 4, 0)) as manager:
-            out = manager.stack(self, 'fit', X, y, **kwargs)
+        with ParallelProcessing(
+            self.backend, self.n_jobs, max(self.verbose - 4, 0)
+        ) as manager:
+            out = manager.stack(self, "fit", X, y, **kwargs)
 
         if self.verbose:
             print_time(t0, "{:<35}".format("Fit complete"), file=f)
@@ -203,11 +228,12 @@ class Sequential(BaseStacker):
 
         f, t0 = print_job(self, "Predicting")
 
-        out = self._predict(X, 'predict', **kwargs)
+        out = self._predict(X, "predict", **kwargs)
 
         if self.verbose:
-            print_time(t0, "{:<35}".format("Predict complete"),
-                       file=f, flush=True)
+            print_time(
+                t0, "{:<35}".format("Predict complete"), file=f, flush=True
+            )
         return out
 
     def transform(self, X, **kwargs):
@@ -234,11 +260,12 @@ class Sequential(BaseStacker):
 
         f, t0 = print_job(self, "Transforming")
 
-        out = self._predict(X, 'transform', **kwargs)
+        out = self._predict(X, "transform", **kwargs)
 
         if self.verbose:
-            print_time(t0, "{:<35}".format("Transform complete"),
-                       file=f, flush=True)
+            print_time(
+                t0, "{:<35}".format("Transform complete"), file=f, flush=True
+            )
 
         return out
 
@@ -260,9 +287,10 @@ class Sequential(BaseStacker):
             or new predictions on X using base learners fitted on all training
             data.
         """
-        r = kwargs.pop('return_preds', True)
-        with ParallelProcessing(self.backend, self.n_jobs,
-                                max(self.verbose - 4, 0)) as manager:
+        r = kwargs.pop("return_preds", True)
+        with ParallelProcessing(
+            self.backend, self.n_jobs, max(self.verbose - 4, 0)
+        ) as manager:
             out = manager.stack(self, job, X, return_preds=r, **kwargs)
 
         if not isinstance(out, list):
@@ -280,13 +308,12 @@ class Sequential(BaseStacker):
             d = layer.raw_data
             if not d:
                 continue
-            out.extend([('%s/%s' % (layer.name, k), v) for k, v in d])
+            out.extend([("%s/%s" % (layer.name, k), v) for k, v in d])
         return Data(out)
 
 
 ###############################################################################
 class BaseEnsemble(BaseEstimator):
-
     """BaseEnsemble class.
 
     Core ensemble class methods used to add ensemble layers and manipulate
@@ -329,9 +356,17 @@ class BaseEnsemble(BaseEstimator):
 
     @abstractmethod
     def __init__(
-            self, shuffle=False, random_state=None, scorer=None, verbose=False,
-            layers=None, array_check=None, model_selection=False, sample_size=20,
-            **kwargs):
+        self,
+        shuffle=False,
+        random_state=None,
+        scorer=None,
+        verbose=False,
+        layers=None,
+        array_check=None,
+        model_selection=False,
+        sample_size=20,
+        **kwargs
+    ):
         self.shuffle = shuffle
         self.random_state = random_state
         self.scorer = scorer
@@ -351,7 +386,8 @@ class BaseEnsemble(BaseEstimator):
         if array_check is not None:
             warnings.warn(
                 "array checking is deprecated. The array_check argument will be removed in 0.2.4.",
-                DeprecationWarning)
+                DeprecationWarning,
+            )
 
     def add(self, estimators, indexer, preprocessing=None, **kwargs):
         """Method for adding a layer.
@@ -423,7 +459,7 @@ class BaseEnsemble(BaseEstimator):
         lyr = self._build_layer(estimators, indexer, preprocessing, **kwargs)
 
         self.layers.append(clone(lyr))
-        setattr(self, lyr.name.replace('-', '_'), lyr)
+        setattr(self, lyr.name.replace("-", "_"), lyr)
 
         self._backend.push(lyr)
         return self
@@ -460,7 +496,7 @@ class BaseEnsemble(BaseEstimator):
         lyr = self._build_layer(estimators, indexer, preprocessing, **kwargs)
 
         self.layers[idx] = clone(lyr)
-        setattr(self, lyr.name.replace('-', '_'), lyr)
+        setattr(self, lyr.name.replace("-", "_"), lyr)
 
         self._backend.replace(idx, lyr)
         return self
@@ -483,7 +519,7 @@ class BaseEnsemble(BaseEstimator):
         name = self.layers[idx].name
 
         self.layers.pop(idx)
-        delattr(self, name.replace('-', '_'))
+        delattr(self, name.replace("-", "_"))
 
         self._backend.pop(idx)
         return self
@@ -547,7 +583,8 @@ class BaseEnsemble(BaseEstimator):
         if self.model_selection:
             if y is None:
                 raise TypeError(
-                    "In model selection mode, y is a required argument.")
+                    "In model selection mode, y is a required argument."
+                )
 
             # Need to modify the transform method to account for blending
             # cutting X in size, so y needs to be cut too
@@ -588,7 +625,7 @@ class BaseEnsemble(BaseEstimator):
             return a tuple ``(X_trans, y_trans)`` where ``y_trans`` is either
             ``y``, or a trunctated version to match the samples in ``X_trans``.
         """
-        kwargs.pop('return_preds', None)
+        kwargs.pop("return_preds", None)
         return self.fit(X, y, return_preds=True)
 
     def predict(self, X, **kwargs):
@@ -626,7 +663,7 @@ class BaseEnsemble(BaseEstimator):
         pred : array-like or tuple, shape=[n_samples, n_features]
             predictions for provided input array.
         """
-        kwargs.pop('proba', None)
+        kwargs.pop("proba", None)
         return self.predict(X, proba=True, **kwargs)
 
     def _build_layer(self, estimators, indexer, preprocessing, **kwargs):
@@ -634,21 +671,21 @@ class BaseEnsemble(BaseEstimator):
         # --- check args ---
 
         # Arguments that cannot be very between layers
-        check_kwargs(kwargs, ['backend', 'n_jobs'])
+        check_kwargs(kwargs, ["backend", "n_jobs"])
 
         # Pop layer kwargs and override Sequential args
-        verbose = kwargs.pop('verbose', max(self._backend.verbose - 1, 0))
-        dtype = kwargs.pop('dtype', self._backend.dtype)
-        propagate = kwargs.pop('propagate_features', None)
-        shuffle = kwargs.pop('shuffle', self.shuffle)
-        random_state = kwargs.pop('random_state', self.random_state)
-        rs = kwargs.pop('raise_on_exception', self.raise_on_exception)
+        verbose = kwargs.pop("verbose", max(self._backend.verbose - 1, 0))
+        dtype = kwargs.pop("dtype", self._backend.dtype)
+        propagate = kwargs.pop("propagate_features", None)
+        shuffle = kwargs.pop("shuffle", self.shuffle)
+        random_state = kwargs.pop("random_state", self.random_state)
+        rs = kwargs.pop("raise_on_exception", self.raise_on_exception)
         if random_state:
             random_state = check_random_state(random_state).randint(0, 10000)
 
         # Set learner kwargs
-        kwargs['verbose'] = max(verbose - 1, 0)
-        kwargs['scorer'] = kwargs.pop('scorer', self.scorer)
+        kwargs["verbose"] = max(verbose - 1, 0)
+        kwargs["scorer"] = kwargs.pop("scorer", self.scorer)
 
         # Check estimator and preprocessing formatting
         group = make_group(indexer, estimators, preprocessing, kwargs)
@@ -656,9 +693,14 @@ class BaseEnsemble(BaseEstimator):
         # --- layer ---
         name = "layer-%i" % (len(self._backend.stack) + 1)  # Start count at 1
         lyr = Layer(
-            name=name, dtype=dtype, shuffle=shuffle,
-            random_state=random_state, verbose=verbose,
-            raise_on_exception=rs, propagate_features=propagate)
+            name=name,
+            dtype=dtype,
+            shuffle=shuffle,
+            random_state=random_state,
+            verbose=verbose,
+            raise_on_exception=rs,
+            propagate_features=propagate,
+        )
         lyr.push(group)
         return lyr
 

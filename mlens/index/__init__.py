@@ -16,24 +16,24 @@ from .subsemble import SubsetIndex, ClusteredSubsetIndex
 from .temporal import TemporalIndex
 
 INDEXERS = {
-    'stack': FoldIndex,
-    'blend': BlendIndex,
-    'subsemble': SubsetIndex,
-    'clusteredsubsemble': ClusteredSubsetIndex,
-    'full': FullIndex,
-    'temporal': TemporalIndex,
+    "stack": FoldIndex,
+    "blend": BlendIndex,
+    "subsemble": SubsetIndex,
+    "clusteredsubsemble": ClusteredSubsetIndex,
+    "full": FullIndex,
+    "temporal": TemporalIndex,
 }
 
 
 __all__ = [
-    'BaseIndex',
-    'BlendIndex',
-    'FoldIndex',
-    'SubsetIndex',
-    'FullIndex',
-    'TemporalIndex',
-    'ClusteredSubsetIndex',
-    'prune_train',
-    'partition',
-    'make_tuple'
+    "BaseIndex",
+    "BlendIndex",
+    "FoldIndex",
+    "SubsetIndex",
+    "FullIndex",
+    "TemporalIndex",
+    "ClusteredSubsetIndex",
+    "prune_train",
+    "partition",
+    "make_tuple",
 ]

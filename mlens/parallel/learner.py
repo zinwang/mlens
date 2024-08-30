@@ -7,6 +7,7 @@
 Computational graph nodes. Job generator classes spawning jobs and executing
 estimation on cross-validation sub-graphs.
 """
+
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-instance-attributes
@@ -17,17 +18,30 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 from ._base_functions import (
-    slice_array, set_output_columns, assign_predictions, score_predictions,
-    replace, save, load, prune_files, check_params)
+    slice_array,
+    set_output_columns,
+    assign_predictions,
+    score_predictions,
+    replace,
+    save,
+    load,
+    prune_files,
+    check_params,
+)
 from .base import OutputMixin, ProbaMixin, IndexMixin, BaseEstimator
 
 from ..metrics import Data
 from ..utils import safe_print, print_time, format_name, assert_valid_pipeline
-from ..utils.exceptions import (NotFittedError, FitFailedWarning,
-                                ParallelProcessingError, NotInitializedError)
+from ..utils.exceptions import (
+    NotFittedError,
+    FitFailedWarning,
+    ParallelProcessingError,
+    NotInitializedError,
+)
 
 from ..externals.sklearn.base import clone
 from ..externals.joblib.parallel import delayed
+
 try:
     from time import perf_counter as time
 except ImportError:
@@ -36,7 +50,7 @@ except ImportError:
 
 # Types of indexers that require fits only on subsets or only on the full data
 ONLY_SUB = []
-ONLY_ALL = ['fullindex', 'nonetype']
+ONLY_ALL = ["fullindex", "nonetype"]
 GLOBAL_LEARNER_NAMES = list()
 GLOBAL_TRANSFORMER_NAMES = list()
 
@@ -48,8 +62,15 @@ class IndexedEstimator(object):
     Lightweight wrapper around estimator dumps during fitting.
 
     """
+
     __slots__ = [
-        '_estimator', 'name', 'index', 'in_index', 'out_index', 'data']
+        "_estimator",
+        "name",
+        "index",
+        "in_index",
+        "out_index",
+        "data",
+    ]
 
     def __init__(self, estimator, name, index, in_index, out_index, data):
         self._estimator = estimator
@@ -70,13 +91,25 @@ class IndexedEstimator(object):
 
     def __getstate__(self):
         """Return pickable object"""
-        return (self._estimator, self.name, self.index, self.in_index,
-                self.out_index, self.data)
+        return (
+            self._estimator,
+            self.name,
+            self.index,
+            self.in_index,
+            self.out_index,
+            self.data,
+        )
 
     def __setstate__(self, state):
         """Load tuple into instance"""
-        (self._estimator, self.name, self.index, self.in_index,
-         self.out_index, self.data) = state
+        (
+            self._estimator,
+            self.name,
+            self.index,
+            self.in_index,
+            self.out_index,
+            self.data,
+        ) = state
 
 
 class SubLearner(object):
@@ -84,8 +117,19 @@ class SubLearner(object):
 
     Wrapper around a sub_learner job.
     """
-    def __init__(self, job, parent, estimator, in_index, out_index,
-                 in_array, targets, out_array, index):
+
+    def __init__(
+        self,
+        job,
+        parent,
+        estimator,
+        in_index,
+        out_index,
+        in_array,
+        targets,
+        out_array,
+        index,
+    ):
         self.job = job
         self.estimator = estimator
         self.in_index = in_index
@@ -111,13 +155,14 @@ class SubLearner(object):
         self.pred_time_ = None
 
         self.name = parent.cache_name
-        self.name_index = '.'.join([self.name] + [str(i) for i in index])
+        self.name_index = ".".join([self.name] + [str(i) for i in index])
 
         if self.preprocess is not None:
-            self.preprocess_index = '.'.join(
-                [self.preprocess] + [str(i) for i in index])
+            self.preprocess_index = ".".join(
+                [self.preprocess] + [str(i) for i in index]
+            )
         else:
-            self.processing_index = ''
+            self.processing_index = ""
 
     def __call__(self):
         """Launch job"""
@@ -135,12 +180,14 @@ class SubLearner(object):
         if self.out_array is not None:
             self._predict(transformers, self.scorer is not None)
 
-        o = IndexedEstimator(estimator=self.estimator,
-                             name=self.name_index,
-                             index=self.index,
-                             in_index=self.in_index,
-                             out_index=self.out_index,
-                             data=self.data)
+        o = IndexedEstimator(
+            estimator=self.estimator,
+            name=self.name_index,
+            index=self.index,
+            in_index=self.in_index,
+            out_index=self.out_index,
+            data=self.data,
+        )
 
         save(path, self.name_index, o)
 
@@ -201,30 +248,42 @@ class SubLearner(object):
         self.pred_time_ = time() - t0
 
         # Assign predictions to matrix
-        assign_predictions(self.out_array, predictions,
-                           self.out_index, self.output_columns, n)
+        assign_predictions(
+            self.out_array, predictions, self.out_index, self.output_columns, n
+        )
 
         # Score predictions if applicable
         if score_preds:
             self.score_ = score_predictions(
-                ytemp, predictions, self.scorer, self.name_index, self.name)
+                ytemp, predictions, self.scorer, self.name_index, self.name
+            )
 
     @property
     def data(self):
         """fit data"""
-        out = {'score': self.score_,
-               'ft': self.fit_time_,
-               'pt': self.pred_time_}
+        out = {
+            "score": self.score_,
+            "ft": self.fit_time_,
+            "pt": self.pred_time_,
+        }
         return out
 
 
 class SubTransformer(object):
+    """Sub-routine for fitting a pipeline"""
 
-    """Sub-routine for fitting a pipeline
-    """
-
-    def __init__(self, job, parent, estimator, in_index, in_array,
-                 targets, index, out_index=None, out_array=None):
+    def __init__(
+        self,
+        job,
+        parent,
+        estimator,
+        in_index,
+        in_array,
+        targets,
+        index,
+        out_index=None,
+        out_array=None,
+    ):
         self.job = job
         self.estimator = estimator
         self.in_index = in_index
@@ -239,8 +298,7 @@ class SubTransformer(object):
         self.path = parent._path
         self.verbose = parent.verbose
         self.name = parent.cache_name
-        self.name_index = '.'.join(
-            [self.name] + [str(i) for i in index])
+        self.name_index = ".".join([self.name] + [str(i) for i in index])
 
         if not parent.__no_output__:
             self.output_columns = parent.output_columns[index[0]]
@@ -261,13 +319,13 @@ class SubTransformer(object):
         """Run a transformation"""
         t0 = time()
         n = self.in_array.shape[0]
-        xtemp, ytemp = slice_array(
-            self.in_array, self.targets, self.out_index)
+        xtemp, ytemp = slice_array(self.in_array, self.targets, self.out_index)
 
         xtemp, ytemp = self.estimator.transform(xtemp, ytemp)
 
         assign_predictions(
-            self.out_array, xtemp, self.out_index, self.output_columns, n)
+            self.out_array, xtemp, self.out_index, self.output_columns, n
+        )
 
         if self.verbose:
             msg = "{:<30} {}".format(self.name_index, "done")
@@ -278,8 +336,7 @@ class SubTransformer(object):
         """Fit transformers"""
         path = path if path else self.path
         t0 = time()
-        xtemp, ytemp = slice_array(
-            self.in_array, self.targets, self.in_index)
+        xtemp, ytemp = slice_array(self.in_array, self.targets, self.in_index)
 
         t0_f = time()
         self.estimator.fit(xtemp, ytemp)
@@ -288,12 +345,14 @@ class SubTransformer(object):
         if self.out_array is not None:
             self._transform()
 
-        o = IndexedEstimator(estimator=self.estimator,
-                             name=self.name_index,
-                             index=self.index,
-                             in_index=self.in_index,
-                             out_index=self.out_index,
-                             data=self.data)
+        o = IndexedEstimator(
+            estimator=self.estimator,
+            name=self.name_index,
+            index=self.index,
+            in_index=self.in_index,
+            out_index=self.out_index,
+            data=self.data,
+        )
         save(path, self.name_index, o)
         if self.verbose:
             f = "stdout" if self.verbose < 10 else "stderr"
@@ -303,23 +362,38 @@ class SubTransformer(object):
     @property
     def data(self):
         """fit data"""
-        return {'ft': self.transform_time_}
+        return {"ft": self.transform_time_}
 
 
 class EvalSubLearner(SubLearner):
-
     """EvalSubLearner
 
     sub-routine for cross-validated evaluation.
     """
-    def __init__(self, job, parent, estimator, in_index, out_index,
-                 in_array, targets, index):
+
+    def __init__(
+        self,
+        job,
+        parent,
+        estimator,
+        in_index,
+        out_index,
+        in_array,
+        targets,
+        index,
+    ):
 
         super(EvalSubLearner, self).__init__(
-            job=job, parent=parent, estimator=estimator,
-            in_index=in_index, out_index=out_index,
-            in_array=in_array, out_array=None,
-            targets=targets, index=index)
+            job=job,
+            parent=parent,
+            estimator=estimator,
+            in_index=in_index,
+            out_index=out_index,
+            in_array=in_array,
+            out_array=None,
+            targets=targets,
+            index=index,
+        )
         self.error_score = parent.error_score
         self.train_score_ = None
         self.test_score_ = None
@@ -336,12 +410,14 @@ class EvalSubLearner(SubLearner):
         self._fit(transformers)
         self._predict(transformers)
 
-        o = IndexedEstimator(estimator=self.estimator,
-                             name=self.name_index,
-                             index=self.index,
-                             in_index=self.in_index,
-                             out_index=self.out_index,
-                             data=self.data)
+        o = IndexedEstimator(
+            estimator=self.estimator,
+            name=self.name_index,
+            index=self.index,
+            in_index=self.in_index,
+            out_index=self.out_index,
+            data=self.data,
+        )
         save(path, self.name_index, o)
 
         if self.verbose:
@@ -353,11 +429,13 @@ class EvalSubLearner(SubLearner):
         """Sub-routine to with sublearner"""
         # Train set
         self.train_score_, self.train_pred_time_ = self._score_preds(
-            transformers, self.in_index)
+            transformers, self.in_index
+        )
 
         # Validation set
         self.test_score_, self.test_pred_time_ = self._score_preds(
-            transformers, self.out_index)
+            transformers, self.out_index
+        )
 
     def _score_preds(self, transformers, index):
         # Train scores
@@ -374,7 +452,8 @@ class EvalSubLearner(SubLearner):
                 warnings.warn(
                     "Scoring failed. Setting error score %r."
                     "Details:\n%r" % (self.error_score, exc),
-                    FitFailedWarning)
+                    FitFailedWarning,
+                )
                 scores = self.error_score
         else:
             scores = self.scorer(self.estimator, xtemp, ytemp)
@@ -385,19 +464,18 @@ class EvalSubLearner(SubLearner):
     @property
     def data(self):
         """Score data"""
-        out = {'test_score': self.test_score_,
-               'train_score': self.train_score_,
-               'fit_time': self.fit_time_,
-               'pred_time': self.train_pred_time_,
-               # 'test_pred_time': self.train_pred_time_,
-               }
+        out = {
+            "test_score": self.test_score_,
+            "train_score": self.train_score_,
+            "fit_time": self.fit_time_,
+            "pred_time": self.train_pred_time_,
+            # 'test_pred_time': self.train_pred_time_,
+        }
         return out
 
 
 class Cache(object):
-
-    """Cache wrapper for IndexedEstimator
-    """
+    """Cache wrapper for IndexedEstimator"""
 
     def __init__(self, obj, path, verbose):
         self.obj = obj
@@ -417,7 +495,6 @@ class Cache(object):
 
 ###############################################################################
 class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
-
     """Base computational node inherited by job generators.
 
     Common API for job generators. A class that inherits the base
@@ -456,43 +533,44 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
         self.output_columns = None
         self.feature_span = None
 
-        self.__static__.extend(['estimator', 'name', 'indexer'])
+        self.__static__.extend(["estimator", "name", "indexer"])
 
     def __iter__(self):
         yield self
 
-    def __call__(self, args, arg_type='main', parallel=None):
+    def __call__(self, args, arg_type="main", parallel=None):
         """Caller for producing jobs"""
-        job = args['job']
-        self._path = args['dir']
-        _threading = self.backend == 'threading'
+        job = args["job"]
+        self._path = args["dir"]
+        _threading = self.backend == "threading"
 
         if not self.__indexer__:
             raise NotInitializedError(
-                "Instance has no indexer attached. Call set_indexer first.")
+                "Instance has no indexer attached. Call set_indexer first."
+            )
 
-        if job != 'fit' and not self.__fitted__:
+        if job != "fit" and not self.__fitted__:
             raise NotFittedError(
-                "Instance not fitted with current params. Call 'fit' first.")
+                "Instance not fitted with current params. Call 'fit' first."
+            )
 
-        if job == 'fit':
-            if self.__fitted__ and args.pop('refit', False):
+        if job == "fit":
+            if self.__fitted__ and args.pop("refit", False):
                 # Check refit
                 if self.__no_output__:
                     return
-                args['job'] = 'transform'
+                args["job"] = "transform"
                 return self(args, arg_type, parallel)
 
             # Record static params
             self._store_static_params()
 
-        generator = getattr(self, 'gen_%s' % job)(**args[arg_type])
+        generator = getattr(self, "gen_%s" % job)(**args[arg_type])
 
         if not parallel:
             return generator
 
-        parallel(delayed(subtask, not _threading)()
-                 for subtask in generator)
+        parallel(delayed(subtask, not _threading)() for subtask in generator)
 
         if self.__collect__:
             self.collect()
@@ -526,7 +604,7 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
                 out_array=P,
                 index=estimator.index,
                 targets=None,
-                )
+            )
 
     def gen_fit(self, X, y, P=None):
         """Routine for generating fit jobs conditional on refit
@@ -546,16 +624,20 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
         # We use a derived cache_name during estimation: if the name of the
         # instance or the name of the preprocessing dependency changes, this
         # allows us to pick up on that.
-        if hasattr(self, 'preprocess'):
-            self.cache_name = '%s.%s' % (
-                self.preprocess, self.name) if self.preprocess else self.name
+        if hasattr(self, "preprocess"):
+            self.cache_name = (
+                "%s.%s" % (self.preprocess, self.name)
+                if self.preprocess
+                else self.name
+            )
         else:
             self.cache_name = self.name
 
         if self.__subtype__ is None:
             raise ParallelProcessingError(
                 "Class incorrectly constructed. Need to set class attribute "
-                "__subtype__")
+                "__subtype__"
+            )
 
         self.__collect__ = True
 
@@ -566,7 +648,7 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
             out = P if self.__only_all__ else None
             for partition_index in self.indexer.partition():
                 yield self.__subtype__(
-                    job='fit',
+                    job="fit",
                     parent=self,
                     estimator=self.cloned_estimator,
                     in_index=partition_index,
@@ -581,7 +663,8 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
         if not self.__only_all__:
             # Fit sub-learners on cv folds
             for i, (train_index, test_index) in enumerate(
-                    self.indexer.generate()):
+                self.indexer.generate()
+            ):
                 # Note that we bump index[1] by 1 to have index[1] start at 1
                 if self._partitions == 1:
                     index = (0, i + 1)
@@ -590,7 +673,7 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
                     index = (i // splits, i % splits + 1)
 
                 yield self.__subtype__(
-                    job='fit',
+                    job="fit",
                     parent=self,
                     estimator=self.cloned_estimator,
                     in_index=train_index,
@@ -616,7 +699,7 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
             output array to populate. Must be writeable. Only pass if
             predictions are desired.
         """
-        return self._gen_pred('transform', X, P, self.sublearners)
+        return self._gen_pred("transform", X, P, self.sublearners)
 
     def gen_predict(self, X, P=None):
         """Generate predicting jobs
@@ -633,7 +716,7 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
             output array to populate. Must be writeable. Only pass if
             predictions are desired.
         """
-        return self._gen_pred('predict', X, P, self.learner)
+        return self._gen_pred("predict", X, P, self.learner)
 
     def collect(self, path=None):
         """Load fitted estimator from cache
@@ -646,10 +729,12 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
         if path is None:
             path = self._path
         if self.__collect__:
-            (learner_files,
-             learner_data,
-             sublearner_files,
-             sublearner_data) = self._collect(path)
+            (
+                learner_files,
+                learner_data,
+                sublearner_files,
+                sublearner_data,
+            ) = self._collect(path)
 
             self.clear()
             self._learner_ = learner_files
@@ -692,7 +777,8 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
             f = files.pop(0)
             if f in files:
                 raise ParallelProcessingError(
-                    "Corrupt cache: duplicate cache entry found.\n%r" % f)
+                    "Corrupt cache: duplicate cache entry found.\n%r" % f
+                )
 
             if f.index[1] == 0:
                 learner_files.append(f)
@@ -721,7 +807,8 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
         multiplier = self._get_multiplier(X, y)
         target = self._partitions * multiplier + n_left_concats
         set_output_columns(
-            [self], self._partitions, multiplier, n_left_concats, target)
+            [self], self._partitions, multiplier, n_left_concats, target
+        )
 
         mi = n_left_concats
         mx = max([i for i in self.output_columns.values()]) + multiplier
@@ -735,8 +822,11 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
     @property
     def __fitted__(self):
         """Fit status"""
-        if (not self._learner_ or not self._sublearners_ or
-                not self.indexer.__fitted__):
+        if (
+            not self._learner_
+            or not self._sublearners_
+            or not self.indexer.__fitted__
+        ):
             return False
 
         # Check estimator param overlap
@@ -768,7 +858,7 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
     def learner(self):
         """Generator for learner fitted on full data"""
         # pylint: disable=not-an-iterable
-        out = self._return_attr('_learner_')
+        out = self._return_attr("_learner_")
         for estimator in out:
             yield estimator
 
@@ -776,30 +866,29 @@ class BaseNode(OutputMixin, IndexMixin, BaseEstimator):
     def sublearners(self):
         """Generator for learner fitted on folds"""
         # pylint: disable=not-an-iterable
-        out = self._return_attr('_sublearners_')
+        out = self._return_attr("_sublearners_")
         for estimator in out:
             yield estimator
 
     @property
     def raw_data(self):
         """List of data collected from each sub-learner during fitting."""
-        return self._return_attr('_data_')
+        return self._return_attr("_data_")
 
     @property
     def data(self):
         """Dictionary with aggregated data from fitting sub-learners."""
-        out = self._return_attr('_data_')
+        out = self._return_attr("_data_")
         return Data(out)
 
     @property
     def times(self):
         """Fit and predict times for the final learners"""
-        out = self._return_attr('_times_')
+        out = self._return_attr("_times_")
         return Data(out)
 
 
 class Learner(ProbaMixin, BaseNode):
-
     """Learner
 
     Wrapper for base learners.
@@ -842,11 +931,23 @@ class Learner(ProbaMixin, BaseNode):
 
     __subtype__ = SubLearner
 
-    def __init__(self, estimator, indexer=None, name=None, preprocess=None,
-                 attr=None, scorer=None, proba=False, **kwargs):
+    def __init__(
+        self,
+        estimator,
+        indexer=None,
+        name=None,
+        preprocess=None,
+        attr=None,
+        scorer=None,
+        proba=False,
+        **kwargs
+    ):
         super(Learner, self).__init__(
-            name=format_name(name, 'learner', GLOBAL_LEARNER_NAMES),
-            estimator=estimator, indexer=indexer, **kwargs)
+            name=format_name(name, "learner", GLOBAL_LEARNER_NAMES),
+            estimator=estimator,
+            indexer=indexer,
+            **kwargs
+        )
 
         self._classes = None
         self.proba = proba
@@ -856,7 +957,7 @@ class Learner(ProbaMixin, BaseNode):
         self.attr = attr if attr else self._predict_attr
 
         # Protect preprocess against later changes
-        self.__static__.append('preprocess')
+        self.__static__.append("preprocess")
 
     @property
     def scorer(self):
@@ -870,7 +971,6 @@ class Learner(ProbaMixin, BaseNode):
 
 
 class Transformer(BaseNode):
-
     """Preprocessing handler.
 
     Wrapper for transformation pipeline.
@@ -906,9 +1006,10 @@ class Transformer(BaseNode):
 
     def __init__(self, estimator, indexer=None, name=None, **kwargs):
         assert_valid_pipeline(estimator)
-        name = format_name(name, 'transformer', GLOBAL_TRANSFORMER_NAMES)
+        name = format_name(name, "transformer", GLOBAL_TRANSFORMER_NAMES)
         super(Transformer, self).__init__(
-            name=name, estimator=estimator, indexer=indexer, **kwargs)
+            name=name, estimator=estimator, indexer=indexer, **kwargs
+        )
         self.__no_output__ = True
 
     def _get_multiplier(self, X, y=None, alt=None):
@@ -917,6 +1018,7 @@ class Transformer(BaseNode):
 
     def _gen_pred(self, job, X, P, generator):
         if self.__no_output__:
+
             def gen():
                 for o in generator:
                     yield Cache(o, self._path, self.verbose)
@@ -927,7 +1029,6 @@ class Transformer(BaseNode):
 
 
 class EvalTransformer(Transformer):
-
     r"""Evaluator version of the Transformer.
 
     Derived class from Transformer adapted to cross\-validated grid-search.
@@ -936,14 +1037,14 @@ class EvalTransformer(Transformer):
 
     def __init__(self, estimator, indexer=None, name=None, **kwargs):
         super(EvalTransformer, self).__init__(
-            estimator, indexer=indexer, name=name, **kwargs)
+            estimator, indexer=indexer, name=name, **kwargs
+        )
         self.output_columns = {0: 0}  # For compatibility with SubTransformer
         self.__only_all__ = False
         self.__only_sub__ = True
 
 
 class EvalLearner(Learner):
-
     """EvalLearner
 
     EvalLearner is a derived class from Learner used for cross-validated
@@ -984,21 +1085,39 @@ class EvalLearner(Learner):
 
     __subtype__ = EvalSubLearner
 
-    def __init__(self, estimator, preprocess, name, attr, scorer,
-                 error_score=None, verbose=False, **kwargs):
+    def __init__(
+        self,
+        estimator,
+        preprocess,
+        name,
+        attr,
+        scorer,
+        error_score=None,
+        verbose=False,
+        **kwargs
+    ):
         super(EvalLearner, self).__init__(
-            estimator=estimator, preprocess=preprocess,
-            name=name, attr=attr, scorer=scorer, verbose=verbose, **kwargs)
+            estimator=estimator,
+            preprocess=preprocess,
+            name=name,
+            attr=attr,
+            scorer=scorer,
+            verbose=verbose,
+            **kwargs
+        )
 
         self.__only_sub__ = True
         self.__only_all__ = False
-        self.output_columns = {0: 0}     # For compatibility with SubLearner
+        self.output_columns = {0: 0}  # For compatibility with SubLearner
         self.error_score = error_score
 
     def gen_fit(self, X, y, P=None, refit=True):
         """Generator for fitting learner on given data"""
-        self.cache_name = '%s.%s' % (
-            self.preprocess, self.name) if self.preprocess else self.name
+        self.cache_name = (
+            "%s.%s" % (self.preprocess, self.name)
+            if self.preprocess
+            else self.name
+        )
 
         if not refit and self.__fitted__:
             self.gen_transform(X, P)
@@ -1009,15 +1128,14 @@ class EvalLearner(Learner):
             raise ValueError("Cannot run cross-validation without an indexer")
 
         self.__collect__ = True
-        for i, (train_index, test_index) in enumerate(
-                self.indexer.generate()):
+        for i, (train_index, test_index) in enumerate(self.indexer.generate()):
             # Note that we bump index[1] by 1 to have index[1] start at 1
             if self._partitions == 1:
                 index = (0, i + 1)
             else:
                 index = (0, i % self._partitions + 1)
             yield EvalSubLearner(
-                job='fit',
+                job="fit",
                 parent=self,
                 estimator=self.cloned_estimator,
                 in_index=train_index,

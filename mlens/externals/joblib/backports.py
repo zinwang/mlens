@@ -1,6 +1,7 @@
 """
 Backports of fixes for joblib dependencies
 """
+
 import os
 import time
 import ctypes
@@ -11,28 +12,39 @@ from distutils.version import LooseVersion
 try:
     import numpy as np
 
-    def make_memmap(filename, dtype='uint8', mode='r+', offset=0,
-                    shape=None, order='C'):
+    def make_memmap(
+        filename, dtype="uint8", mode="r+", offset=0, shape=None, order="C"
+    ):
         """Backport of numpy memmap offset fix.
 
         See https://github.com/numpy/numpy/pull/8443 for more details.
 
         The numpy fix will be available in numpy 1.13.
         """
-        mm = np.memmap(filename, dtype=dtype, mode=mode, offset=offset,
-                       shape=shape, order=order)
-        if LooseVersion(np.__version__) < '1.13':
+        mm = np.memmap(
+            filename,
+            dtype=dtype,
+            mode=mode,
+            offset=offset,
+            shape=shape,
+            order=order,
+        )
+        if LooseVersion(np.__version__) < "1.13":
             mm.offset = offset
         return mm
+
 except ImportError:
-    def make_memmap(filename, dtype='uint8', mode='r+', offset=0,
-                    shape=None, order='C'):
+
+    def make_memmap(
+        filename, dtype="uint8", mode="r+", offset=0, shape=None, order="C"
+    ):
         raise NotImplementedError(
             "'joblib.backports.make_memmap' should not be used "
-            'if numpy is not installed.')
+            "if numpy is not installed."
+        )
 
 
-if os.name == 'nt':
+if os.name == "nt":
     error_access_denied = 5
     try:
         from os import replace
@@ -46,7 +58,8 @@ if os.name == 'nt':
 
             movefile_replace_existing = 0x1
             return_value = ctypes.windll.kernel32.MoveFileExW(
-                src, dst, movefile_replace_existing)
+                src, dst, movefile_replace_existing
+            )
             if return_value == 0:
                 raise ctypes.WinError()
 
@@ -65,7 +78,7 @@ if os.name == 'nt':
                 replace(src, dst)
                 break
             except Exception as exc:
-                if getattr(exc, 'winerror', None) == error_access_denied:
+                if getattr(exc, "winerror", None) == error_access_denied:
                     time.sleep(sleep_time)
                     total_sleep_time += sleep_time
                     sleep_time *= 2
@@ -73,6 +86,7 @@ if os.name == 'nt':
                     raise
         else:
             raise
+
 else:
     try:
         from os import replace as concurrency_safe_rename

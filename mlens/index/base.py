@@ -7,6 +7,7 @@
 
 Base classes for partitioning training data.
 """
+
 from __future__ import division
 
 from abc import abstractmethod
@@ -81,7 +82,7 @@ def partition(n, p):
     array([3, 3, 2])
     """
     sizes = (n // p) * np.ones(p, dtype=np.int32)
-    sizes[:n % p] += 1
+    sizes[: n % p] += 1
     return sizes
 
 
@@ -118,7 +119,6 @@ def make_tuple(arr):
 
 
 class BaseIndex(BaseEstimator):
-
     """Base Index class.
 
     Specification of indexer-wide methods and attributes that we can always
@@ -194,8 +194,12 @@ class BaseIndex(BaseEstimator):
                 tri_start_below, tri_stop_below = 0, tei_start
                 tri_start_above, tri_stop_above = tei_stop, n_samples
 
-                tri = prune_train(tri_start_below, tri_stop_below,
-                                  tri_start_above, tri_stop_above)
+                tri = prune_train(
+                    tri_start_below,
+                    tri_stop_below,
+                    tri_start_above,
+                    tri_stop_above,
+                )
 
                 yield tri, tei
                 last = tei_stop
@@ -242,11 +246,13 @@ class BaseIndex(BaseEstimator):
         # Check that the instance have some array information to work with
         if not self.__fitted__:
             if X is None:
-                raise AttributeError("No array provided to indexer. Either "
-                                     "pass an array to the 'generate' method, "
-                                     "or call the 'fit' method first or "
-                                     "initiate the instance with an array X "
-                                     "as argument.")
+                raise AttributeError(
+                    "No array provided to indexer. Either "
+                    "pass an array to the 'generate' method, "
+                    "or call the 'fit' method first or "
+                    "initiate the instance with an array X "
+                    "as argument."
+                )
             # Need to call fit to continue
             self.fit(X)
 
@@ -290,7 +296,6 @@ class BaseIndex(BaseEstimator):
 
 
 class FullIndex(BaseIndex):
-
     """Vacuous indexer to be used with final layers.
 
     FullIndex is a compatibility class to be used with meta layers. It stores

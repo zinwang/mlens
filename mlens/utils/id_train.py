@@ -21,7 +21,6 @@ from numbers import Integral
 
 
 class IdTrain(BaseEstimator):
-
     """Container to identify training set.
 
     Samples a random subset from set passed to the `fit` method, to allow

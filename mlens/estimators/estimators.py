@@ -8,6 +8,7 @@ Scikit-learn estimators of computational graph nodes. Estimator classes are
 full Scikit-learn estimators that can be used in conjunction with other
 standard estimators.
 """
+
 from ..parallel import Layer, make_group
 from ..parallel.base import ParamMixin
 from ..parallel.wrapper import EstimatorMixin
@@ -17,7 +18,6 @@ from ..externals.sklearn.base import clone
 
 
 class BaseEstimator(EstimatorMixin, ParamMixin, _BaseEstimator):
-
     """Base class for estimators
 
     Ensure proper initialization of Mixins.
@@ -47,7 +47,6 @@ class BaseEstimator(EstimatorMixin, ParamMixin, _BaseEstimator):
 
 
 class LearnerEstimator(BaseEstimator):
-
     """Learner estimator
 
     Wraps an estimator in a cross-validation strategy.
@@ -82,8 +81,16 @@ class LearnerEstimator(BaseEstimator):
         sequential processing.
     """
 
-    def __init__(self, estimator, indexer, verbose=False, scorer=None,
-                 backend=None, n_jobs=-1, dtype=None):
+    def __init__(
+        self,
+        estimator,
+        indexer,
+        verbose=False,
+        scorer=None,
+        backend=None,
+        n_jobs=-1,
+        dtype=None,
+    ):
         super(LearnerEstimator, self).__init__()
 
         self.estimator = estimator
@@ -94,15 +101,20 @@ class LearnerEstimator(BaseEstimator):
         self.n_jobs = n_jobs
         self.dtype = dtype
 
-        self.__static__.extend(['estimator', 'indexer'])
+        self.__static__.extend(["estimator", "indexer"])
 
     __init__.deprecated_original = __init__
 
     def _build(self):
         """Build backend"""
-        lr_kwargs = {'attr': 'predict', 'verbose': self.verbose,
-                     'scorer': self.scorer, 'backend': self.backend,
-                     'n_jobs': self.n_jobs, 'dtype': self.dtype}
+        lr_kwargs = {
+            "attr": "predict",
+            "verbose": self.verbose,
+            "scorer": self.scorer,
+            "backend": self.backend,
+            "n_jobs": self.n_jobs,
+            "dtype": self.dtype,
+        }
 
         idx = clone(self.indexer)
         est = clone(self.estimator)
@@ -141,8 +153,15 @@ class TransformerEstimator(BaseEstimator):
         sequential processing.
     """
 
-    def __init__(self, preprocessing, indexer, verbose=False,
-                 backend=None, n_jobs=-1, dtype=None):
+    def __init__(
+        self,
+        preprocessing,
+        indexer,
+        verbose=False,
+        backend=None,
+        n_jobs=-1,
+        dtype=None,
+    ):
         super(TransformerEstimator, self).__init__()
 
         self.preprocessing = preprocessing
@@ -152,15 +171,18 @@ class TransformerEstimator(BaseEstimator):
         self.n_jobs = n_jobs
         self.dtype = dtype
 
-        self.__static__.extend(['preprocessing', 'indexer'])
+        self.__static__.extend(["preprocessing", "indexer"])
 
     __init__.deprecated_original = __init__
 
     def _build(self):
         """Build backend"""
-        tr_kwargs = {'backend': self.backend,
-                     'n_jobs': self.n_jobs, 'verbose': self.verbose,
-                     'dtype': self.dtype}
+        tr_kwargs = {
+            "backend": self.backend,
+            "n_jobs": self.n_jobs,
+            "verbose": self.verbose,
+            "dtype": self.dtype,
+        }
 
         idx = clone(self.indexer)
         prep = clone(self.preprocessing)
@@ -171,7 +193,6 @@ class TransformerEstimator(BaseEstimator):
 
 
 class LayerEnsemble(BaseEstimator):
-
     """One-layer ensemble
 
     An ensemble of estimators and preprocessing pipelines in one layer. Takes
@@ -215,8 +236,16 @@ class LayerEnsemble(BaseEstimator):
     """
 
     def __init__(
-            self, groups, propagate_features=None, shuffle=False, n_jobs=-1,
-            backend=None, verbose=False, random_state=None, dtype=None):
+        self,
+        groups,
+        propagate_features=None,
+        shuffle=False,
+        n_jobs=-1,
+        backend=None,
+        verbose=False,
+        random_state=None,
+        dtype=None,
+    ):
         super(LayerEnsemble, self).__init__()
         self.groups = groups if isinstance(groups, list) else [groups]
         self.propagate_features = propagate_features
@@ -227,16 +256,20 @@ class LayerEnsemble(BaseEstimator):
         self.n_jobs = n_jobs
         self.dtype = dtype
 
-        self.__static__.extend(['groups'])
+        self.__static__.extend(["groups"])
 
     __init__.deprecated_original = __init__
 
     def _build(self):
         """Build Backend"""
         self._backend = Layer(
-            propagate_features=self.propagate_features, dtype=self.dtype,
-            shuffle=self.shuffle, random_state=self.random_state,
-            verbose=self.verbose, stack=clone(self.groups))
+            propagate_features=self.propagate_features,
+            dtype=self.dtype,
+            shuffle=self.shuffle,
+            random_state=self.random_state,
+            verbose=self.verbose,
+            stack=clone(self.groups),
+        )
         self._store_static_params()
 
     def push(self, *groups):

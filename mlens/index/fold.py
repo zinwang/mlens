@@ -6,6 +6,7 @@
 
 Stack indexing.
 """
+
 from __future__ import division
 
 from ._checks import check_full_index
@@ -13,7 +14,6 @@ from .base import BaseIndex
 
 
 class FoldIndex(BaseIndex):
-
     """Indexer that generates the full size of ``X``.
 
     K-Fold iterator that generates fold index tuples.

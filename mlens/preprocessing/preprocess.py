@@ -11,7 +11,6 @@ from ..externals.sklearn.base import BaseEstimator, TransformerMixin
 
 
 class Subset(BaseEstimator, TransformerMixin):
-
     """Select a subset of features.
 
     The ``Subset`` class acts as a transformer that reduces the feature set
@@ -39,7 +38,7 @@ class Subset(BaseEstimator, TransformerMixin):
         y : array-like of shape = [n_samples, n_features]
             pass-through for Scikit-learn pipeline compatibility.
         """
-        self.is_df_ = X.__class__.__name__ in ['DataFrame', 'Series']
+        self.is_df_ = X.__class__.__name__ in ["DataFrame", "Series"]
 
         if self.subset is not None:
             self.use_loc_ = any([isinstance(x, str) for x in self.subset])
@@ -79,7 +78,6 @@ class Subset(BaseEstimator, TransformerMixin):
 
 
 class Shift(BaseEstimator, TransformerMixin):
-
     r"""Lag operator.
 
     Shift an input array :math:`X` with :math:`s` steps, i.e. for some time
@@ -119,5 +117,4 @@ class Shift(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         """Return lagged dataset."""
-        return X[:-self.s]
-
+        return X[: -self.s]

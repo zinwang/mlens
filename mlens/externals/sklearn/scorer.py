@@ -45,17 +45,22 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
     @abstractmethod
     def __call__(self, estimator, X, y, sample_weight=None):
         if self._deprecation_msg is not None:
-            warnings.warn(self._deprecation_msg,
-                          category=DeprecationWarning,
-                          stacklevel=2)
+            warnings.warn(
+                self._deprecation_msg,
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
 
     def __repr__(self):
-        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
-                                 for k, v in self._kwargs.items()])
-        return ("make_scorer(%s%s%s%s)"
-                % (self._score_func.__name__,
-                   "" if self._sign > 0 else ", greater_is_better=False",
-                   self._factory_args(), kwargs_string))
+        kwargs_string = "".join(
+            [", %s=%s" % (str(k), str(v)) for k, v in self._kwargs.items()]
+        )
+        return "make_scorer(%s%s%s%s)" % (
+            self._score_func.__name__,
+            "" if self._sign > 0 else ", greater_is_better=False",
+            self._factory_args(),
+            kwargs_string,
+        )
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -86,16 +91,18 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        super(_PredictScorer, self).__call__(estimator, X, y_true,
-                                             sample_weight=sample_weight)
+        super(_PredictScorer, self).__call__(
+            estimator, X, y_true, sample_weight=sample_weight
+        )
         y_pred = estimator.predict(X)
         if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y_true, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y_true, y_pred, **self._kwargs
+            )
 
 
 class _ProbaScorer(_BaseScorer):
@@ -123,13 +130,14 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        super(_ProbaScorer, self).__call__(clf, X, y,
-                                           sample_weight=sample_weight)
+        super(_ProbaScorer, self).__call__(
+            clf, X, y, sample_weight=sample_weight
+        )
         y_pred = clf.predict_proba(X)
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
@@ -164,8 +172,9 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        super(_ThresholdScorer, self).__call__(clf, X, y,
-                                               sample_weight=sample_weight)
+        super(_ThresholdScorer, self).__call__(
+            clf, X, y, sample_weight=sample_weight
+        )
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
@@ -189,9 +198,9 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs
+            )
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
@@ -199,8 +208,13 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
-def make_scorer(score_func, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+def make_scorer(
+    score_func,
+    greater_is_better=True,
+    needs_proba=False,
+    needs_threshold=False,
+    **kwargs
+):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -254,8 +268,10 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
-        raise ValueError("Set either needs_proba or needs_threshold to True,"
-                         " but not both.")
+        raise ValueError(
+            "Set either needs_proba or needs_threshold to True,"
+            " but not both."
+        )
     if needs_proba:
         cls = _ProbaScorer
     elif needs_threshold:

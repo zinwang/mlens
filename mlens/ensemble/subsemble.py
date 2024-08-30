@@ -15,7 +15,6 @@ from ..utils import kwarg_parser
 
 
 class Subsemble(BaseEnsemble):
-
     r"""Subsemble class.
 
     Subsemble is a supervised ensemble algorithm that uses subsets of
@@ -234,15 +233,35 @@ class Subsemble(BaseEnsemble):
     """
 
     def __init__(
-            self, partitions=2, partition_estimator=None, folds=2,
-            shuffle=False, random_state=None, scorer=None,
-            raise_on_exception=True, array_check=None, verbose=False, n_jobs=-1,
-            backend=None, model_selection=False, sample_size=20, layers=None):
+        self,
+        partitions=2,
+        partition_estimator=None,
+        folds=2,
+        shuffle=False,
+        random_state=None,
+        scorer=None,
+        raise_on_exception=True,
+        array_check=None,
+        verbose=False,
+        n_jobs=-1,
+        backend=None,
+        model_selection=False,
+        sample_size=20,
+        layers=None,
+    ):
         super(Subsemble, self).__init__(
-            shuffle=shuffle, random_state=random_state, scorer=scorer,
-            raise_on_exception=raise_on_exception, verbose=verbose,
-            n_jobs=n_jobs, layers=layers, model_selection=model_selection,
-            sample_size=sample_size, array_check=array_check, backend=backend)
+            shuffle=shuffle,
+            random_state=random_state,
+            scorer=scorer,
+            raise_on_exception=raise_on_exception,
+            verbose=verbose,
+            n_jobs=n_jobs,
+            layers=layers,
+            model_selection=model_selection,
+            sample_size=sample_size,
+            array_check=array_check,
+            backend=backend,
+        )
 
         self.__initialized__ = 0  # Unlock parameter setting
         self.partition_estimator = partition_estimator
@@ -263,9 +282,18 @@ class Subsemble(BaseEnsemble):
         """
         return self.add(estimator, meta=True, **kwargs)
 
-    def add(self, estimators, preprocessing=None, meta=False,
-            partitions=None, partition_estimator=None, folds=None, proba=False,
-            propagate_features=None, **kwargs):
+    def add(
+        self,
+        estimators,
+        preprocessing=None,
+        meta=False,
+        partitions=None,
+        partition_estimator=None,
+        folds=None,
+        proba=False,
+        propagate_features=None,
+        **kwargs
+    ):
         r"""Add layer to ensemble.
 
         Parameters
@@ -386,8 +414,11 @@ class Subsemble(BaseEnsemble):
         else:
             # Parse arguments for the indexer
             p = partitions if partitions is not None else self.partitions
-            e = partition_estimator if partition_estimator is not None \
+            e = (
+                partition_estimator
+                if partition_estimator is not None
                 else self.partition_estimator
+            )
             c = folds if folds is not None else self.folds
 
             idx = ClusteredSubsetIndex if e is not None else SubsetIndex
@@ -395,11 +426,16 @@ class Subsemble(BaseEnsemble):
 
             kwargs_idx, kwargs = kwarg_parser(idx.__init__, kwargs)
 
-            if 'raise_on_exception' not in kwargs_idx:
-                kwargs_idx['raise_on_exception'] = self.raise_on_exception
+            if "raise_on_exception" not in kwargs_idx:
+                kwargs_idx["raise_on_exception"] = self.raise_on_exception
 
             idx = idx(*args, **kwargs_idx)
 
         return super(Subsemble, self).add(
-            estimators=estimators, preprocessing=preprocessing, indexer=idx,
-            proba=proba, propagate_features=propagate_features, **kwargs)
+            estimators=estimators,
+            preprocessing=preprocessing,
+            indexer=idx,
+            proba=proba,
+            propagate_features=propagate_features,
+            **kwargs
+        )

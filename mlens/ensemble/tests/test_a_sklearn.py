@@ -1,15 +1,25 @@
 """
 Test Scikit-learn
 """
+
 import numpy as np
-from mlens.ensemble import SuperLearner, Subsemble, BlendEnsemble, TemporalEnsemble
+from mlens.ensemble import (
+    SuperLearner,
+    Subsemble,
+    BlendEnsemble,
+    TemporalEnsemble,
+)
 from mlens.testing.dummy import return_pickled
+
 try:
     from sklearn.utils.estimator_checks import check_estimator
     from sklearn.linear_model import Lasso, LinearRegression
     from sklearn.neighbors import KNeighborsRegressor
     from sklearn.svm import SVR
-    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+    from sklearn.ensemble import (
+        RandomForestRegressor,
+        GradientBoostingRegressor,
+    )
 
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import StandardScaler, PolynomialFeatures
@@ -26,24 +36,21 @@ if has_sklearn:
 
     X, y = load_boston(True)
 
-    estimators = [Lasso(),
-                  GradientBoostingRegressor(),
-                  LinearRegression(),
-                  KNeighborsRegressor(),
-                  SVR(gamma='scale'),
-                  RandomForestRegressor(n_estimators=100),
-                  ]
+    estimators = [
+        Lasso(),
+        GradientBoostingRegressor(),
+        LinearRegression(),
+        KNeighborsRegressor(),
+        SVR(gamma="scale"),
+        RandomForestRegressor(n_estimators=100),
+    ]
 
-    est_prep = {'prep1': estimators,
-                'prep2': estimators,
-                'prep3': estimators}
+    est_prep = {"prep1": estimators, "prep2": estimators, "prep3": estimators}
 
     prep_1 = [PCA()]
     prep_2 = [PolynomialFeatures(), StandardScaler()]
 
-    prep = {'prep1': prep_1,
-            'prep2': prep_2,
-            'prep3': []}
+    prep = {"prep1": prep_1, "prep2": prep_2, "prep3": []}
 
     def get_ensemble(cls, backend, preprocessing, **kwargs):
         """Get ensemble."""
@@ -58,7 +65,7 @@ if has_sklearn:
 
     def test_super_learner_s_m():
         """[SuperLearner] Test scikit-learn comp - mp | np"""
-        ens = get_ensemble(SuperLearner, 'multiprocessing', None)
+        ens = get_ensemble(SuperLearner, "multiprocessing", None)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -70,7 +77,7 @@ if has_sklearn:
 
     def test_super_learner_f_m():
         """[SuperLearner] Test scikit-learn comp - mp | p"""
-        ens = get_ensemble(SuperLearner, 'multiprocessing', prep)
+        ens = get_ensemble(SuperLearner, "multiprocessing", prep)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -79,11 +86,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_super_learner_s_t():
         """[SuperLearner] Test scikit-learn comp - th | np"""
-        ens = get_ensemble(SuperLearner, 'threading', None)
+        ens = get_ensemble(SuperLearner, "threading", None)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -92,11 +98,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_super_learner_f_t():
         """[SuperLearner] Test scikit-learn comp - th | p"""
-        ens = get_ensemble(SuperLearner, 'threading', prep)
+        ens = get_ensemble(SuperLearner, "threading", prep)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -105,11 +110,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_subsemble_s_m():
         """[Subsemble] Test scikit-learn comp - mp | np"""
-        ens = get_ensemble(Subsemble, 'multiprocessing', None)
+        ens = get_ensemble(Subsemble, "multiprocessing", None)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -118,12 +122,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
-
 
     def test_subsemble_f_m():
         """[Subsemble] Test scikit-learn comp - mp | p"""
-        ens = get_ensemble(Subsemble, 'multiprocessing', prep)
+        ens = get_ensemble(Subsemble, "multiprocessing", prep)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -132,11 +134,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_subsemble_s_t():
         """[Subsemble] Test scikit-learn comp - th | np"""
-        ens = get_ensemble(Subsemble, 'threading', None)
+        ens = get_ensemble(Subsemble, "threading", None)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -145,11 +146,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_subsemble_f_t():
         """[Subsemble] Test scikit-learn comp - th | p"""
-        ens = get_ensemble(Subsemble, 'threading', prep)
+        ens = get_ensemble(Subsemble, "threading", prep)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -158,11 +158,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_blend_s_m():
         """[BlendEnsemble] Test scikit-learn comp - mp | np"""
-        ens = get_ensemble(BlendEnsemble, 'multiprocessing', None)
+        ens = get_ensemble(BlendEnsemble, "multiprocessing", None)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -171,11 +170,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_blend_f_m():
         """[BlendEnsemble] Test scikit-learn comp - mp | p"""
-        ens = get_ensemble(BlendEnsemble, 'multiprocessing', prep)
+        ens = get_ensemble(BlendEnsemble, "multiprocessing", prep)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -184,11 +182,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_blend_s_m():
         """[BlendEnsemble] Test scikit-learn comp - th | np"""
-        ens = get_ensemble(BlendEnsemble, 'threading', None)
+        ens = get_ensemble(BlendEnsemble, "threading", None)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -198,10 +195,9 @@ if has_sklearn:
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
 
-
     def test_blend_f_m():
         """[BlendEnsemble] Test scikit-learn comp - th | p"""
-        ens = get_ensemble(BlendEnsemble, 'threading', prep)
+        ens = get_ensemble(BlendEnsemble, "threading", prep)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -213,7 +209,9 @@ if has_sklearn:
 
     def test_temporal_s_m():
         """[TemporalEnsemble] Test scikit-learn comp - mp | np"""
-        ens = get_ensemble(TemporalEnsemble, 'multiprocessing', None, step_size=10)
+        ens = get_ensemble(
+            TemporalEnsemble, "multiprocessing", None, step_size=10
+        )
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -222,11 +220,12 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_temporal_f_m():
         """[TemporalEnsemble] Test scikit-learn comp - mp | p"""
-        ens = get_ensemble(TemporalEnsemble, 'multiprocessing', prep, step_size=10)
+        ens = get_ensemble(
+            TemporalEnsemble, "multiprocessing", prep, step_size=10
+        )
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -235,11 +234,10 @@ if has_sklearn:
         ens = return_pickled(ens)
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
-
 
     def test_temporal_s_m():
         """[TemporalEnsemble] Test scikit-learn comp - th | np"""
-        ens = get_ensemble(TemporalEnsemble, 'threading', None, step_size=10)
+        ens = get_ensemble(TemporalEnsemble, "threading", None, step_size=10)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape
@@ -249,10 +247,9 @@ if has_sklearn:
         pp = ens.predict(X)
         np.testing.assert_array_equal(p, pp)
 
-
     def test_temporal_f_m():
         """[TemporalEnsemble] Test scikit-learn comp - th | p"""
-        ens = get_ensemble(TemporalEnsemble, 'threading', prep, step_size=10)
+        ens = get_ensemble(TemporalEnsemble, "threading", prep, step_size=10)
         ens.fit(X, y)
         p = ens.predict(X)
         assert p.shape == y.shape

@@ -6,6 +6,7 @@
 
 Partitioning estimators
 """
+
 from __future__ import division
 
 import numpy as np
@@ -15,7 +16,6 @@ from .base import BaseIndex, partition, make_tuple, prune_train
 
 
 class SubsetIndex(BaseIndex):
-
     r"""Subsample index generator.
 
     Generates cross-validation folds according used to create ``J``
@@ -132,8 +132,9 @@ class SubsetIndex(BaseIndex):
             indexer with stores sample size data.
         """
         n = X.shape[0]
-        check_subsample_index(n, self.partitions, self.folds,
-                              self.raise_on_exception)
+        check_subsample_index(
+            n, self.partitions, self.folds, self.raise_on_exception
+        )
 
         self.n_samples = self.n_test_samples = n
         self.__fitted__ = True
@@ -159,11 +160,13 @@ class SubsetIndex(BaseIndex):
         """
         if not self.__fitted__:
             if X is None:
-                raise AttributeError("No array provided to indexer. Either "
-                                     "pass an array to the 'generate' method, "
-                                     "or call the 'fit' method first or "
-                                     "initiate the instance with an array X "
-                                     "as argument.")
+                raise AttributeError(
+                    "No array provided to indexer. Either "
+                    "pass an array to the 'generate' method, "
+                    "or call the 'fit' method first or "
+                    "initiate the instance with an array X "
+                    "as argument."
+                )
             else:
                 # Need to call fit to continue
                 self.fit(X)
@@ -266,8 +269,12 @@ class SubsetIndex(BaseIndex):
                 tri_start_below, tri_stop_below = p_start, t_start
                 tri_start_above, tri_stop_above = t_stop, p_stop
 
-                tri = prune_train(tri_start_below, tri_stop_below,
-                                  tri_start_above, tri_stop_above)
+                tri = prune_train(
+                    tri_start_below,
+                    tri_stop_below,
+                    tri_start_above,
+                    tri_stop_above,
+                )
 
                 yield tri, tei
                 t_last += t_size
@@ -275,7 +282,6 @@ class SubsetIndex(BaseIndex):
 
 
 class ClusteredSubsetIndex(BaseIndex):
-
     """Clustered Subsample index generator.
 
     Generates cross-validation folds according used to create ``J``
@@ -373,16 +379,18 @@ class ClusteredSubsetIndex(BaseIndex):
     train fold index: [8], cluster labels: [2]
     """
 
-    def __init__(self,
-                 partition_estimator,
-                 partitions=2,
-                 folds=2,
-                 X=None,
-                 y=None,
-                 fit_estimator=True,
-                 attr='predict',
-                 partition_on='X',
-                 raise_on_exception=True):
+    def __init__(
+        self,
+        partition_estimator,
+        partitions=2,
+        folds=2,
+        X=None,
+        y=None,
+        fit_estimator=True,
+        attr="predict",
+        partition_on="X",
+        raise_on_exception=True,
+    ):
         super(ClusteredSubsetIndex, self).__init__()
         self.partition_estimator = partition_estimator
         self.fit_estimator = fit_estimator
@@ -396,7 +404,7 @@ class ClusteredSubsetIndex(BaseIndex):
         if X is not None:
             self.fit(X, y)
 
-    def fit(self, X, y=None, job='fit'):
+    def fit(self, X, y=None, job="fit"):
         """Method for storing array data.
 
         Parameters
@@ -420,7 +428,7 @@ class ClusteredSubsetIndex(BaseIndex):
         n = X.shape[0]
         self.n_samples = self.n_test_samples = n
 
-        if 'fit' in job:
+        if "fit" in job:
             # Only generate new clusters if fitting an ensemble
             if self.fit_estimator:
                 try:
@@ -485,9 +493,9 @@ class ClusteredSubsetIndex(BaseIndex):
         n_samples = X.shape[0]
 
         f = getattr(self.partition_estimator, self.attr)
-        if self.partition_on == 'X':
+        if self.partition_on == "X":
             cluster_ids = f(X)
-        elif self.partition_on == 'y':
+        elif self.partition_on == "y":
             cluster_ids = f(y)
         else:
             cluster_ids = f(X, y)

@@ -6,6 +6,7 @@
 
 Blend indexing.
 """
+
 from __future__ import division
 
 from numbers import Integral
@@ -16,7 +17,6 @@ from .base import BaseIndex
 
 
 class BlendIndex(BaseIndex):
-
     """Indexer that generates two non-overlapping subsets of ``X``.
 
     Iterator that generates one training fold and one test fold that are
@@ -133,11 +133,9 @@ class BlendIndex(BaseIndex):
     TEST tuple: (0, 3) | array: array([0, 1, 2])
     """
 
-    def __init__(self,
-                 test_size=0.5,
-                 train_size=None,
-                 X=None,
-                 raise_on_exception=True):
+    def __init__(
+        self, test_size=0.5, train_size=None, X=None, raise_on_exception=True
+    ):
         super(BlendIndex, self).__init__()
         self.n_train = None
         self.n_test = None
@@ -185,8 +183,13 @@ class BlendIndex(BaseIndex):
         else:
             self.n_train = int(np.floor(self.train_size * self.n_samples))
 
-        check_partial_index(self.n_samples, self.test_size, self.train_size,
-                            self.n_test, self.n_train)
+        check_partial_index(
+            self.n_samples,
+            self.test_size,
+            self.train_size,
+            self.n_test,
+            self.n_train,
+        )
 
         self.n_test_samples = self.n_test
 

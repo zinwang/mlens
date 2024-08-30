@@ -11,14 +11,17 @@ import numpy as np
 
 from mlens import config
 from mlens.utils import IdTrain
-from mlens.index import (FoldIndex,
-                         BlendIndex,
-                         SubsetIndex,
-                         TemporalIndex,
-                         ClusteredSubsetIndex,
-                         FullIndex)
+from mlens.index import (
+    FoldIndex,
+    BlendIndex,
+    SubsetIndex,
+    TemporalIndex,
+    ClusteredSubsetIndex,
+    FullIndex,
+)
 
 from mlens.index.base import partition, prune_train
+
 try:
     from contextlib import redirect_stderr
 except ImportError:
@@ -30,9 +33,7 @@ tmpdir = config.get_tmpdir()
 
 
 class ClusterEstimator(object):
-
-    """Dummy clustering estimator.
-    """
+    """Dummy clustering estimator."""
 
     def __init__(self, type=1):
         self.type = type
@@ -74,9 +75,10 @@ def test_check_cache():
     """[Base] Test check cache."""
     tmp = config.get_prefix() + "test"
     os.mkdir(tmp)
-    with open(os.devnull, 'w') as f, redirect_stderr(f):
-        subprocess.Popen("echo this is a test >> " + tmp +
-                         "/test.txt", shell=True)
+    with open(os.devnull, "w") as f, redirect_stderr(f):
+        subprocess.Popen(
+            "echo this is a test >> " + tmp + "/test.txt", shell=True
+        )
         config.clear_cache(config.get_tmpdir())
 
 
@@ -114,7 +116,8 @@ def test_full_index_is_fitted():
 
     idx = FoldIndex(4)
     assert not idx.n_samples
-    for _ in idx.generate(X): pass
+    for _ in idx.generate(X):
+        pass
     assert idx.n_samples
 
     idx = FoldIndex(4, X)
@@ -125,17 +128,18 @@ def test_full_tuple_shape():
     """[Base] FoldIndex: test the tuple shape on generation."""
     tups = [(tri, tei) for tri, tei in FoldIndex(5, X=X).generate()]
 
-    assert tups == [(((1, 5),)       , (0, 1)),
-                    (((0, 1), (2, 5)), (1, 2)),
-                    (((0, 2), (3, 5)), (2, 3)),
-                    (((0, 3), (4, 5)), (3, 4)),
-                    (((0, 4),)       , (4, 5))
-                    ]
+    assert tups == [
+        (((1, 5),), (0, 1)),
+        (((0, 1), (2, 5)), (1, 2)),
+        (((0, 2), (3, 5)), (2, 3)),
+        (((0, 3), (4, 5)), (3, 4)),
+        (((0, 4),), (4, 5)),
+    ]
 
 
 def test_full_array_shape():
     """[Base] FoldIndex: test the array shape on generation."""
-    tr = [np.array([2, 3, 4]),  np.array([0, 1, 4]), np.array([0, 1, 2, 3])]
+    tr = [np.array([2, 3, 4]), np.array([0, 1, 4]), np.array([0, 1, 2, 3])]
     te = [np.array([0, 1]), np.array([2, 3]), np.array([4])]
 
     for i, (tri, tei) in enumerate(FoldIndex(3, X).generate(as_array=True)):
@@ -177,29 +181,37 @@ def test_full_raises_on_empty():
 ###############################################################################
 def test_temp_index_is_fitted():
     """[Base] TemporalIndex: check fit methods."""
-    attrs = ['n_samples', 'n_test_samples']
+    attrs = ["n_samples", "n_test_samples"]
 
     idx = TemporalIndex()
-    for attr in attrs: assert not getattr(idx, attr)
+    for attr in attrs:
+        assert not getattr(idx, attr)
     idx.fit(X)
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert getattr(idx, attr)
 
     idx = TemporalIndex()
-    for attr in attrs: assert not getattr(idx, attr)
-    for _ in idx.generate(X): pass
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert not getattr(idx, attr)
+    for _ in idx.generate(X):
+        pass
+    for attr in attrs:
+        assert getattr(idx, attr)
 
     idx = TemporalIndex(X=X)
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert getattr(idx, attr)
 
 
 def test_temp_tuple_shape():
     """[Base] TemporalIndex: test the tuple shape on generation."""
     tup = [(tri, tei) for tri, tei in TemporalIndex().generate(X)]
-    assert tup == [((0, 1), (1, 2)),
-                   ((0, 2), (2, 3)),
-                   ((0, 3), (3, 4)),
-                   ((0, 4), (4, 5))]
+    assert tup == [
+        ((0, 1), (1, 2)),
+        ((0, 2), (2, 3)),
+        ((0, 3), (3, 4)),
+        ((0, 4), (4, 5)),
+    ]
 
 
 def test_temp_tuple_advanced():
@@ -212,10 +224,10 @@ def test_temp_tuple_advanced():
         ((7, 10), (12, 14)),
         ((9, 12), (14, 16)),
         ((11, 14), (16, 18)),
-        ((13, 16), (18, 20))]
+        ((13, 16), (18, 20)),
+    ]
 
-    np.testing.assert_array_equal(
-        Y[tup[-1][1][0]:tup[-1][1][1]], Y[-2:])
+    np.testing.assert_array_equal(Y[tup[-1][1][0] : tup[-1][1][1]], Y[-2:])
 
 
 def test_temp_array_shape():
@@ -231,11 +243,12 @@ def test_temp_array_shape():
         np.testing.assert_array_equal(tri, trs[i])
         np.testing.assert_array_equal(tei, tes[i])
 
+
 def test_temp_raises_on_floats():
     """[Base] TemporalIndex: check raises error on floats"""
-    for attr in ['burn_in', 'step_size', 'window', 'lag']:
+    for attr in ["burn_in", "step_size", "window", "lag"]:
         with np.testing.assert_raises(ValueError):
-            TemporalIndex(**{attr: 0.4, 'X': X})
+            TemporalIndex(**{attr: 0.4, "X": X})
 
 
 def test_temp_raises_on_over_burn_in():
@@ -249,28 +262,36 @@ def test_temp_raises_on_over_step_size():
     with np.testing.assert_raises(ValueError):
         TemporalIndex(step_size=X.shape[0], X=X)
 
+
 def test_temp_raises_on_over_lag():
     """[Base] TemporalIndex: check raises error step_size > n_samples"""
     with np.testing.assert_raises(ValueError):
         TemporalIndex(burn_in=2, lag=3, X=X)
 
+
 ###############################################################################
 def test_blend_index_is_fitted():
     """[Base] BlendIndex: check fit methods."""
-    attrs = ['n_samples', 'n_test_samples', 'n_train', 'n_test']
+    attrs = ["n_samples", "n_test_samples", "n_train", "n_test"]
 
     idx = BlendIndex(2, 3)
-    for attr in attrs: assert not getattr(idx, attr)
+    for attr in attrs:
+        assert not getattr(idx, attr)
     idx.fit(X)
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert getattr(idx, attr)
 
     idx = BlendIndex(2, 3)
-    for attr in attrs: assert not getattr(idx, attr)
-    for _ in idx.generate(X): pass
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert not getattr(idx, attr)
+    for _ in idx.generate(X):
+        pass
+    for attr in attrs:
+        assert getattr(idx, attr)
 
     idx = BlendIndex(2, 3, X=X)
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert getattr(idx, attr)
 
 
 def test_blend_tuple_shape():
@@ -319,20 +340,26 @@ def test_blend_raises_empty_train():
 ###############################################################################
 def test_subset_index_is_fitted():
     """[Base] BlendIndex: check fit methods."""
-    attrs = ['n_samples', 'n_test_samples']
+    attrs = ["n_samples", "n_test_samples"]
 
     idx = SubsetIndex()
-    for attr in attrs: assert not getattr(idx, attr)
+    for attr in attrs:
+        assert not getattr(idx, attr)
     idx.fit(X)
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert getattr(idx, attr)
 
     idx = SubsetIndex()
-    for attr in attrs: assert not getattr(idx, attr)
-    for _ in idx.generate(X): pass
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert not getattr(idx, attr)
+    for _ in idx.generate(X):
+        pass
+    for attr in attrs:
+        assert getattr(idx, attr)
 
     idx = SubsetIndex(X=X)
-    for attr in attrs: assert getattr(idx, attr)
+    for attr in attrs:
+        assert getattr(idx, attr)
 
 
 def test_subset_partition_array():
@@ -358,10 +385,12 @@ def test_subset_tuple_shape():
     """[Base] SubsetIndex: test the tuple shape on generation."""
     tup = [(tri, tei) for tri, tei in SubsetIndex(2, 2).generate(X)]
 
-    assert tup == [(((2, 3),), [(0, 2), (3, 4)]),
-                   (((0, 2),), [(2, 3), (4, 5)]),
-                   (((4, 5),), [(0, 2), (3, 4)]),
-                   (((3, 4),), [(2, 3), (4, 5)])]
+    assert tup == [
+        (((2, 3),), [(0, 2), (3, 4)]),
+        (((0, 2),), [(2, 3), (4, 5)]),
+        (((4, 5),), [(0, 2), (3, 4)]),
+        (((3, 4),), [(2, 3), (4, 5)]),
+    ]
 
 
 def test_subset_array_shape():
@@ -398,21 +427,25 @@ def test_clustered_subset_partition():
 
 def test_clustered_subset_tuple_shape():
     """[Base] ClusteredSubsetIndex: test the tuple shape on generation."""
-    tup = [(tri, tei) for tri, tei in
-           ClusteredSubsetIndex(cl, 2, 2).generate(X)]
+    tup = [
+        (tri, tei) for tri, tei in ClusteredSubsetIndex(cl, 2, 2).generate(X)
+    ]
 
-    assert tup == [([(0, 1)], [(1, 5)]),
-                   ([(1, 2)], [(0, 1), (2, 5)]),
-                   ([(2, 4)], [(0, 2), (4, 5)]),
-                   ([(4, 5)], [(0, 4)])]
+    assert tup == [
+        ([(0, 1)], [(1, 5)]),
+        ([(1, 2)], [(0, 1), (2, 5)]),
+        ([(2, 4)], [(0, 2), (4, 5)]),
+        ([(4, 5)], [(0, 4)]),
+    ]
 
 
 def test_clustered_subset_array_shape():
     """[Base] ClusteredSubsetIndex: test the array shape on generation."""
     t = list()
     e = list()
-    for tri, tei in ClusteredSubsetIndex(cl,
-                                         2, 2, X=X).generate(as_array=True):
+    for tri, tei in ClusteredSubsetIndex(cl, 2, 2, X=X).generate(
+        as_array=True
+    ):
         t.append(tri.tolist())
         e.append(tei.tolist())
 
@@ -423,8 +456,9 @@ def test_clustered_subset_array_shape():
 def test_clustered_subset_separation():
     """[Base] SubsetIndex: test the array shape on generation."""
     classes = cl_2.predict(X)
-    for partition in ClusteredSubsetIndex(
-        cl_2, 2, 2, X=X).partition(as_array=True):
+    for partition in ClusteredSubsetIndex(cl_2, 2, 2, X=X).partition(
+        as_array=True
+    ):
         pc = np.unique(classes[partition])
         assert len(pc) == 1
 

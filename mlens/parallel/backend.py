@@ -7,6 +7,7 @@
 Parallel processing backend classes. Manages memory-mapping of data, estimation
 caching and job scheduling.
 """
+
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-instance-attributes
@@ -29,15 +30,17 @@ from scipy.sparse import issparse, hstack
 from .. import config
 from ..externals.joblib import Parallel, dump, load
 from ..utils import check_initialized
-from ..utils.exceptions import (ParallelProcessingError,
-                                ParallelProcessingWarning)
+from ..utils.exceptions import (
+    ParallelProcessingError,
+    ParallelProcessingWarning,
+)
 from ..externals.sklearn.validation import check_random_state
 
 
 ###############################################################################
 def _dtype(a, b=None):
     """Utility for getting a dtype"""
-    return getattr(a, 'dtype', getattr(b, 'dtype', None))
+    return getattr(a, "dtype", getattr(b, "dtype", None))
 
 
 def dump_array(array, name, path):
@@ -62,7 +65,7 @@ def dump_array(array, name, path):
     # First check if the array is on file
     if isinstance(array, str):
         # Load file from disk. Need to dump if not memmaped already
-        if not array.split('.')[-1] in ['mmap', 'npy', 'npz']:
+        if not array.split(".")[-1] in ["mmap", "npy", "npz"]:
             # Try loading the file assuming a csv-like format
             array = _load(array)
 
@@ -71,7 +74,7 @@ def dump_array(array, name, path):
         f = array
     else:
         # Dump ndarray on disk
-        f = os.path.join(path, '%s.mmap' % name)
+        f = os.path.join(path, "%s.mmap" % name)
         if os.path.exists(f):
             os.unlink(f)
         dump(array, f)
@@ -80,35 +83,41 @@ def dump_array(array, name, path):
 
 def _load(arr):
     """Load array from file using default settings."""
-    if arr.split('.')[-1] in ['npy', 'npz']:
+    if arr.split(".")[-1] in ["npy", "npz"]:
         return np.load(arr)
     else:
         try:
             return np.genfromtxt(arr)
         except Exception as e:
-            raise IOError("Could not load X from %s, does not "
-                          "appear to be a valid ndarray. "
-                          "Details:\n%r" % (arr, e))
+            raise IOError(
+                "Could not load X from %s, does not "
+                "appear to be a valid ndarray. "
+                "Details:\n%r" % (arr, e)
+            )
 
 
 def _load_mmap(f):
     """Load a mmap presumably dumped by joblib, otherwise try numpy."""
     try:
-        return load(f, mmap_mode='r')
+        return load(f, mmap_mode="r")
     except (IndexError, KeyError):
         # Joblib's 'load' func fails on npy and npz: use numpy.load
-        return np.load(f, mmap_mode='r')
+        return np.load(f, mmap_mode="r")
 
 
 def _set_path(job, path, threading):
     """Build path as a cache or list depending on whether using threading"""
     if path:
         if not isinstance(path, str) and not threading:
-            raise ValueError("Path must be a str with backend=multiprocessing."
-                             " Got %r" % path.__class__)
+            raise ValueError(
+                "Path must be a str with backend=multiprocessing."
+                " Got %r" % path.__class__
+            )
         elif not isinstance(path, (str, dict)):
-            raise ValueError("Invalid path format. Should be one of "
-                             "str, dict. Got %r" % path.__class__)
+            raise ValueError(
+                "Invalid path format. Should be one of "
+                "str, dict. Got %r" % path.__class__
+            )
         job.dir = path
         return job
 
@@ -121,7 +130,8 @@ def _set_path(job, path, threading):
     path = config.get_tmpdir()
     try:
         job.tmp = tempfile.TemporaryDirectory(
-            prefix=config.get_prefix(), dir=path)
+            prefix=config.get_prefix(), dir=path
+        )
         job.dir = job.tmp.name
     except AttributeError:
         # Fails on python 2
@@ -131,7 +141,6 @@ def _set_path(job, path, threading):
 
 ###############################################################################
 class Job(object):
-
     """Container class for holding and managing job data.
 
     :class:`Job` is intended as a on-the-fly job handler that keeps track
@@ -174,11 +183,30 @@ class Job(object):
         prediction output array
     """
 
-    __slots__ = ['targets', 'predict_in', 'predict_out', 'dir', 'job', 'tmp',
-                 '_n_dir', 'kwargs', 'stack', 'split']
+    __slots__ = [
+        "targets",
+        "predict_in",
+        "predict_out",
+        "dir",
+        "job",
+        "tmp",
+        "_n_dir",
+        "kwargs",
+        "stack",
+        "split",
+    ]
 
-    def __init__(self, job, stack, split, dir=None, tmp=None, predict_in=None,
-                 targets=None, predict_out=None):
+    def __init__(
+        self,
+        job,
+        stack,
+        split,
+        dir=None,
+        tmp=None,
+        predict_in=None,
+        targets=None,
+        predict_out=None,
+    ):
         self.job = job
         self.stack = stack
         self.split = split
@@ -203,8 +231,9 @@ class Job(object):
         """
         if self.predict_out is None:
             return
-        if (issparse(self.predict_out) and not
-                self.predict_out.__class__.__name__.startswith('csr')):
+        if issparse(
+            self.predict_out
+        ) and not self.predict_out.__class__.__name__.startswith("csr"):
             # Enforce csr on spare matrices
             self.predict_out = self.predict_out.tocsr()
 
@@ -226,7 +255,8 @@ class Job(object):
 
         """
         if self.targets is not None and (
-                    self.targets.shape[0] > self.predict_in.shape[0]):
+            self.targets.shape[0] > self.predict_in.shape[0]
+        ):
             # This is legal if X is a prediction matrix generated by predicting
             # only a subset of the original training set.
             # Since indexing is strictly monotonic, we can simply discard
@@ -275,7 +305,8 @@ class Job(object):
             # Persist cache to disk
             if cache_exists and self.split:
                 raise ParallelProcessingError(
-                    "Subdirectory %s exist. Clear cache." % path_name)
+                    "Subdirectory %s exist. Clear cache." % path_name
+                )
             elif not cache_exists:
                 os.mkdir(path)
             return path
@@ -283,7 +314,8 @@ class Job(object):
         # Keep in memory
         if path_name in self.dir and self.split:
             raise ParallelProcessingError(
-                "Subdirectory %s exist. Clear cache." % path_name)
+                "Subdirectory %s exist. Clear cache." % path_name
+            )
         elif path_name not in self.dir:
             self.dir[path_name] = list()
         return self.dir[path_name]
@@ -317,28 +349,29 @@ class Job(object):
             Arguments dictionary
 
         """
-        aux_feed = {'X': self.predict_in, 'P': None}
-        main_feed = {'X': self.predict_in, 'P': self.predict_out}
+        aux_feed = {"X": self.predict_in, "P": None}
+        main_feed = {"X": self.predict_in, "P": self.predict_out}
 
-        if self.job in ['fit', 'evaluate']:
-            main_feed['y'] = self.targets
-            aux_feed['y'] = self.targets
+        if self.job in ["fit", "evaluate"]:
+            main_feed["y"] = self.targets
+            aux_feed["y"] = self.targets
 
         out = dict()
         if kwargs:
             out.update(kwargs)
 
-        out = {'auxiliary': aux_feed,
-               'main': main_feed,
-               'dir': self.subdir(),
-               'job': self.job}
+        out = {
+            "auxiliary": aux_feed,
+            "main": main_feed,
+            "dir": self.subdir(),
+            "job": self.job,
+        }
 
         return out
 
 
 ###############################################################################
 class BaseProcessor(object):
-
     """Parallel processing base class.
 
     Base class for parallel processing engines.
@@ -359,8 +392,15 @@ class BaseProcessor(object):
 
     __meta_class__ = ABCMeta
 
-    __slots__ = ['caller', '__initialized__', '__threading__', 'job',
-                 'n_jobs', 'backend', 'verbose']
+    __slots__ = [
+        "caller",
+        "__initialized__",
+        "__threading__",
+        "job",
+        "n_jobs",
+        "backend",
+        "verbose",
+    ]
 
     @abstractmethod
     def __init__(self, backend=None, n_jobs=None, verbose=None):
@@ -370,13 +410,14 @@ class BaseProcessor(object):
         self.backend = config.get_backend() if not backend else backend
         self.n_jobs = -1 if not n_jobs else n_jobs
         self.verbose = False if not verbose else verbose
-        self.__threading__ = self.backend == 'threading'
+        self.__threading__ = self.backend == "threading"
 
     def __enter__(self):
         return self
 
-    def initialize(self, job, X, y, path,
-                   warm_start=False, return_preds=False, **kwargs):
+    def initialize(
+        self, job, X, y, path, warm_start=False, return_preds=False, **kwargs
+    ):
         """Initialize processing engine.
 
         Set up the job parameters before an estimation call. Calling
@@ -426,10 +467,10 @@ class BaseProcessor(object):
             self._initialize(job=job, X=X, y=y, path=path, **kwargs)
 
         if return_preds is True:
-            return {'return_final': True}
+            return {"return_final": True}
         if return_preds is False:
             return {}
-        return {'return_final': False, 'return_names': return_preds}
+        return {"return_final": False, "return_names": return_preds}
 
     def _initialize(self, job, X, y=None, path=None, **kwargs):
         """Create a job instance for estimation.
@@ -441,7 +482,7 @@ class BaseProcessor(object):
         job = _set_path(job, path, self.__threading__)
 
         # --- Prepare inputs
-        for name, arr in zip(('X', 'y'), (X, y)):
+        for name, arr in zip(("X", "y"), (X, y)):
             if arr is None:
                 continue
 
@@ -455,11 +496,10 @@ class BaseProcessor(object):
                 f = dump_array(arr, name, job.dir)
 
             # Store data for processing
-            if name == 'y' and arr is not None:
+            if name == "y" and arr is not None:
                 job.targets = arr if self.__threading__ else _load_mmap(f)
-            elif name == 'X':
-                job.predict_in = arr \
-                    if self.__threading__ else _load_mmap(f)
+            elif name == "X":
+                job.predict_in = arr if self.__threading__ else _load_mmap(f)
 
         self.job = job
         self.__initialized__ = 1
@@ -498,27 +538,30 @@ class BaseProcessor(object):
                     # Can fail on windows, need to use the shell
                     try:
                         subprocess.Popen(
-                            'rmdir /S /Q %s' % path, shell=True,
+                            "rmdir /S /Q %s" % path,
+                            shell=True,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE).kill()
+                            stderr=subprocess.PIPE,
+                        ).kill()
                     except OSError:
                         warnings.warn(
                             "Failed to delete cache at %s."
                             "If created with default settings, will be "
                             "removed on reboot. For immediate "
-                            "removal, manual removal is required." %
-                            path, ParallelProcessingWarning)
+                            "removal, manual removal is required." % path,
+                            ParallelProcessingWarning,
+                        )
             finally:
                 del path, path_handle
                 gc.collect()
                 if gc.garbage:
                     warnings.warn(
-                        "Clearing cache failed, uncollected:\n%r" %
-                        gc.garbage, ParallelProcessingWarning)
+                        "Clearing cache failed, uncollected:\n%r" % gc.garbage,
+                        ParallelProcessingWarning,
+                    )
 
 
 class ParallelProcessing(BaseProcessor):
-
     """Parallel processing engine.
 
     Engine for running computational graph.
@@ -542,11 +585,22 @@ class ParallelProcessing(BaseProcessor):
         Optional keyword arguments to
         :class:`~mlens.parallel.backend.BaseProcessor`.
     """
+
     def __init__(self, *args, **kwargs):
         super(ParallelProcessing, self).__init__(*args, **kwargs)
 
-    def map(self, caller, job, X, y=None, path=None,
-            return_preds=False, wart_start=False, split=False, **kwargs):
+    def map(
+        self,
+        caller,
+        job,
+        X,
+        y=None,
+        path=None,
+        return_preds=False,
+        wart_start=False,
+        split=False,
+        **kwargs
+    ):
         """Parallel task mapping.
 
         Run independent tasks in caller in parallel.
@@ -603,12 +657,29 @@ class ParallelProcessing(BaseProcessor):
             Prediction array(s).
         """
         out = self.initialize(
-            job=job, X=X, y=y, path=path, warm_start=wart_start,
-            return_preds=return_preds, split=split, stack=False)
+            job=job,
+            X=X,
+            y=y,
+            path=path,
+            warm_start=wart_start,
+            return_preds=return_preds,
+            split=split,
+            stack=False,
+        )
         return self.process(caller=caller, out=out, **kwargs)
 
-    def stack(self, caller, job, X, y=None, path=None, return_preds=False,
-              warm_start=False, split=True, **kwargs):
+    def stack(
+        self,
+        caller,
+        job,
+        X,
+        y=None,
+        path=None,
+        return_preds=False,
+        warm_start=False,
+        split=True,
+        **kwargs
+    ):
         """Stacked parallel task mapping.
 
         Run stacked tasks in caller in parallel.
@@ -668,8 +739,15 @@ class ParallelProcessing(BaseProcessor):
             Prediction array(s).
         """
         out = self.initialize(
-            job=job, X=X, y=y, path=path, warm_start=warm_start,
-            return_preds=return_preds, split=split, stack=True)
+            job=job,
+            X=X,
+            y=y,
+            path=path,
+            warm_start=warm_start,
+            return_preds=return_preds,
+            split=split,
+            stack=True,
+        )
         return self.process(caller=caller, out=out, **kwargs)
 
     def process(self, caller, out, **kwargs):
@@ -703,14 +781,19 @@ class ParallelProcessing(BaseProcessor):
         """
         check_initialized(self)
 
-        return_names = out.pop('return_names', [])
-        return_final = out.pop('return_final', False)
+        return_names = out.pop("return_names", [])
+        return_final = out.pop("return_final", False)
         out = list() if return_names else None
 
         tf = self.job.dir if not isinstance(self.job.dir, list) else None
-        with Parallel(n_jobs=self.n_jobs, temp_folder=tf, max_nbytes=None,
-                      mmap_mode='w+', verbose=self.verbose,
-                      backend=self.backend) as parallel:
+        with Parallel(
+            n_jobs=self.n_jobs,
+            temp_folder=tf,
+            max_nbytes=None,
+            mmap_mode="w+",
+            verbose=self.verbose,
+            backend=self.backend,
+        ) as parallel:
 
             for task in caller:
                 self.job.clear()
@@ -728,8 +811,8 @@ class ParallelProcessing(BaseProcessor):
 
     def _partial_process(self, task, parallel, **kwargs):
         """Process given task"""
-        if self.job.job == 'fit' and getattr(task, 'shuffle', False):
-            self.job.shuffle(getattr(task, 'random_state', None))
+        if self.job.job == "fit" and getattr(task, "shuffle", False):
+            self.job.shuffle(getattr(task, "random_state", None))
 
         task.setup(self.job.predict_in, self.job.targets, self.job.job)
 
@@ -738,7 +821,7 @@ class ParallelProcessing(BaseProcessor):
 
         task(self.job.args(**kwargs), parallel=parallel)
 
-        if not task.__no_output__ and getattr(task, 'n_feature_prop', 0):
+        if not task.__no_output__ and getattr(task, "n_feature_prop", 0):
             self._propagate_features(task)
 
     def _propagate_features(self, task):
@@ -751,12 +834,14 @@ class ParallelProcessing(BaseProcessor):
 
         if not issparse(p_in):
             # Simple item setting
-            p_out[:, :task.n_feature_prop] = p_in[r:, task.propagate_features]
+            p_out[:, : task.n_feature_prop] = p_in[r:, task.propagate_features]
         else:
             # Need to populate propagated features using scipy sparse hstack
             self.job.predict_out = hstack(
-                [p_in[r:, task.propagate_features],
-                 p_out[:, task.n_feature_prop:]]
+                [
+                    p_in[r:, task.propagate_features],
+                    p_out[:, task.n_feature_prop :],
+                ]
             ).tolil()
 
     def _gen_prediction_array(self, task, job, threading):
@@ -765,18 +850,25 @@ class ParallelProcessing(BaseProcessor):
         if threading:
             self.job.predict_out = np.zeros(shape, dtype=_dtype(task))
         else:
-            f = os.path.join(self.job.dir, '%s_out_array.mmap' % task.name)
+            f = os.path.join(self.job.dir, "%s_out_array.mmap" % task.name)
             try:
                 self.job.predict_out = np.memmap(
-                    filename=f, dtype=_dtype(task), mode='w+', shape=shape)
+                    filename=f, dtype=_dtype(task), mode="w+", shape=shape
+                )
             except Exception as exc:
                 raise OSError(
                     "Cannot create prediction matrix of shape ("
-                    "%i, %i), size %i MBs, for %s.\n Details:\n%r" %
-                    (shape[0], shape[1], 8 * shape[0] * shape[1] / (1024 ** 2),
-                     task.name, exc))
+                    "%i, %i), size %i MBs, for %s.\n Details:\n%r"
+                    % (
+                        shape[0],
+                        shape[1],
+                        8 * shape[0] * shape[1] / (1024**2),
+                        task.name,
+                        exc,
+                    )
+                )
 
-    def get_preds(self, dtype=None, order='C'):
+    def get_preds(self, dtype=None, order="C"):
         """Return prediction matrix.
 
         Parameters
@@ -792,10 +884,11 @@ class ParallelProcessing(BaseProcessor):
         P: array-like
             Prediction array
         """
-        if not hasattr(self, 'job'):
+        if not hasattr(self, "job"):
             raise ParallelProcessingError(
                 "Processor has been terminated:\ncannot retrieve final "
-                "prediction array from cache.")
+                "prediction array from cache."
+            )
         if dtype is None:
             dtype = config.get_dtype()
 
@@ -806,7 +899,6 @@ class ParallelProcessing(BaseProcessor):
 
 ###############################################################################
 class ParallelEvaluation(BaseProcessor):
-
     """Parallel cross-validation engine.
 
     Minimal parallel processing engine. Similar to :class:`ParallelProcessing`,
@@ -843,14 +935,22 @@ class ParallelEvaluation(BaseProcessor):
             ``backend != 'multiprocessing'``.
         """
         self._initialize(
-            job='fit', X=X, y=y, path=path, split=False, stack=False)
+            job="fit", X=X, y=y, path=path, split=False, stack=False
+        )
         check_initialized(self)
 
         # Use context manager to ensure same parallel job during entire process
         tf = self.job.dir if not isinstance(self.job.dir, list) else None
-        with Parallel(n_jobs=self.n_jobs, temp_folder=tf, max_nbytes=None,
-                      mmap_mode='w+', verbose=self.verbose,
-                      backend=self.backend) as parallel:
+        with Parallel(
+            n_jobs=self.n_jobs,
+            temp_folder=tf,
+            max_nbytes=None,
+            mmap_mode="w+",
+            verbose=self.verbose,
+            backend=self.backend,
+        ) as parallel:
 
-            caller.indexer.fit(self.job.predict_in, self.job.targets, self.job.job)
+            caller.indexer.fit(
+                self.job.predict_in, self.job.targets, self.job.job
+            )
             caller(parallel, self.job.args(**kwargs), case)

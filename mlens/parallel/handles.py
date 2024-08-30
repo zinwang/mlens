@@ -6,6 +6,7 @@
 
 Handles for mlens.parallel.
 """
+
 from .base import BaseEstimator
 from .learner import Learner, Transformer
 from ._base_functions import mold_objects, transform
@@ -18,7 +19,6 @@ GLOBAL_PIPELINE_NAMES = list()
 
 
 class Pipeline(_BaseEstimator):
-
     """Transformer pipeline
 
     Pipeline class for wrapping a preprocessing pipeline of transformers.
@@ -46,7 +46,7 @@ class Pipeline(_BaseEstimator):
     """
 
     def __init__(self, pipeline, name=None, return_y=False):
-        self.name = format_name(name, 'pipeline', GLOBAL_PIPELINE_NAMES)
+        self.name = format_name(name, "pipeline", GLOBAL_PIPELINE_NAMES)
         self.pipeline = _check_instances(pipeline)
         self.return_y = return_y
         self._pipeline = None
@@ -58,8 +58,9 @@ class Pipeline(_BaseEstimator):
             return out
 
         if fit:
-            self._pipeline = [(tr_name, clone(tr))
-                              for tr_name, tr in self.pipeline]
+            self._pipeline = [
+                (tr_name, clone(tr)) for tr_name, tr in self.pipeline
+            ]
 
         for tr_name, tr in self._pipeline:
             if fit:
@@ -166,13 +167,12 @@ class Pipeline(_BaseEstimator):
         if self.pipeline:
             for tr_name, tr in self.pipeline:
                 for k, v in tr.get_params(deep=True).items():
-                    out['%s__%s' % (tr_name, k)] = v
+                    out["%s__%s" % (tr_name, k)] = v
                     out[tr_name] = tr
         return out
 
 
 class Group(BaseEstimator):
-
     """A handle for learners and transformers that share a common indexer.
 
     Lightweight class for pairing a set of independent learners with
@@ -216,9 +216,15 @@ class Group(BaseEstimator):
         :class:`~mlens.parallel.base.BaseParallel` backend.
     """
 
-    def __init__(self, indexer=None, learners=None, transformers=None,
-                 name=None, **kwargs):
-        name = format_name(name, 'group', GLOBAL_GROUP_NAMES)
+    def __init__(
+        self,
+        indexer=None,
+        learners=None,
+        transformers=None,
+        name=None,
+        **kwargs
+    ):
+        name = format_name(name, "group", GLOBAL_GROUP_NAMES)
         super(Group, self).__init__(name=name, **kwargs)
 
         learners, transformers = mold_objects(learners, transformers)
@@ -233,14 +239,14 @@ class Group(BaseEstimator):
         self.learners = learners
         self.transformers = transformers
 
-        self.__static__.extend(['indexer', 'learners', 'transformers'])
+        self.__static__.extend(["indexer", "learners", "transformers"])
 
     def __iter__(self):
         # We update optional backend kwargs that might have been passed
         # to ensure these are passed to the instances
         backend_kwargs = {
             param: getattr(self, param)
-            for param in ['dtype', 'verbose', 'raise_on_exception']
+            for param in ["dtype", "verbose", "raise_on_exception"]
             if hasattr(self, param)
         }
         for tr in self.transformers:
@@ -263,13 +269,19 @@ class Group(BaseEstimator):
             return out
         for item in self:
             for k, v in item.get_params(deep=deep).items():
-                out['%s__%s' % (item.name, k)] = v
+                out["%s__%s" % (item.name, k)] = v
             out[item.name] = item
         return out
 
 
-def make_group(indexer, estimators, preprocessing,
-               learner_kwargs=None, transformer_kwargs=None, name=None):
+def make_group(
+    indexer,
+    estimators,
+    preprocessing,
+    learner_kwargs=None,
+    transformer_kwargs=None,
+    name=None,
+):
     """Creating a :class:`Group` from a set learners and transformers
 
     Utility function for creating mapping a set of estimators and
@@ -350,14 +362,29 @@ def make_group(indexer, estimators, preprocessing,
     if transformer_kwargs is None:
         transformer_kwargs = {}
 
-    transformers = [Transformer(estimator=Pipeline(tr, return_y=True),
-                                name=case_name, **transformer_kwargs)
-                    for case_name, tr in preprocessing]
+    transformers = [
+        Transformer(
+            estimator=Pipeline(tr, return_y=True),
+            name=case_name,
+            **transformer_kwargs
+        )
+        for case_name, tr in preprocessing
+    ]
 
-    learners = [Learner(estimator=est, preprocess=case_name,
-                        name=learner_name, **learner_kwargs)
-                for case_name, learner_name, est in estimators]
+    learners = [
+        Learner(
+            estimator=est,
+            preprocess=case_name,
+            name=learner_name,
+            **learner_kwargs
+        )
+        for case_name, learner_name, est in estimators
+    ]
 
-    group = Group(indexer=indexer, learners=learners,
-                  transformers=transformers, name=name)
+    group = Group(
+        indexer=indexer,
+        learners=learners,
+        transformers=transformers,
+        name=name,
+    )
     return group

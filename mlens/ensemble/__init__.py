@@ -16,10 +16,12 @@ from .sequential import SequentialEnsemble
 from .temporal import TemporalEnsemble
 from .base import Sequential, BaseEnsemble
 
-__all__ = ['SuperLearner',
-           'BlendEnsemble',
-           'Subsemble',
-           'SequentialEnsemble',
-           'Sequential',
-           'TemporalEnsemble',
-           'BaseEnsemble']
+__all__ = [
+    "SuperLearner",
+    "BlendEnsemble",
+    "Subsemble",
+    "SequentialEnsemble",
+    "Sequential",
+    "TemporalEnsemble",
+    "BaseEnsemble",
+]

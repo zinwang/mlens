@@ -19,7 +19,7 @@ def format_name(name, cls, global_names):
     """Utility for assigning a unique name"""
     # TODO: should pop names when instance is destroyed and check if name taken
     if not name:
-        name = '%s-%i' % (cls, len(global_names))
+        name = "%s-%i" % (cls, len(global_names))
         global_names.append(name)
     return name
 
@@ -34,7 +34,7 @@ def _format_instances(instances, namespace=None):
         case_map = dict()
         instances = list()
         for case, instance_list in sorted(instances_dict.items()):
-            case = '-'.join(case.lower().split())
+            case = "-".join(case.lower().split())
 
             if not instance_list:
                 vacuous.append((case, instance_list))
@@ -67,18 +67,20 @@ def _format_instances(instances, namespace=None):
             if instance is val:
                 tup = [instance.__class__.__name__.lower(), instance]
             else:
-                tup = ['-'.join(val[0].split()).lower(), val[-1]]
+                tup = ["-".join(val[0].split()).lower(), val[-1]]
 
             named_instances.append(tup)
 
         except Exception as e:
-            msg = ("Could not format instance %s. Check that passed instance "
-                   "iterables follow correct syntax:\n"
-                   "- if multiple preprocessing cases, pass a dictionary with "
-                   "instance lists as values and case name as key.\n"
-                   "- else, pass list of (named) instances.\n"
-                   "See documentation for further information.\n"
-                   "Error details: %r")
+            msg = (
+                "Could not format instance %s. Check that passed instance "
+                "iterables follow correct syntax:\n"
+                "- if multiple preprocessing cases, pass a dictionary with "
+                "instance lists as values and case name as key.\n"
+                "- else, pass list of (named) instances.\n"
+                "See documentation for further information.\n"
+                "Error details: %r"
+            )
             raise LayerSpecificationError(msg % (instance, e))
 
     # Check and correct duplicate names
@@ -94,7 +96,7 @@ def _format_instances(instances, namespace=None):
         if name in duplicates:
             current_name_count = name_count[name]  # fix before update
             name_count[name] += 1
-            name += '-%d' % current_name_count  # rename
+            name += "-%d" % current_name_count  # rename
         out.append((name, instance))
     out = sorted(out)
 
@@ -136,11 +138,12 @@ def _check_format(instance_list, namespace=None):
 
         # Check tuple
         is_str = isinstance(element[0], str)
-        no_spa = ' ' not in element[0]
+        no_spa = " " not in element[0]
         no_dup = element[0] not in namespace
 
-        is_est = (hasattr(element[1], 'get_params') and
-                  hasattr(element[1], 'fit'))
+        is_est = hasattr(element[1], "get_params") and hasattr(
+            element[1], "fit"
+        )
 
         if not (is_str and is_est and no_dup and no_spa):
             return False
@@ -198,8 +201,8 @@ def check_instances(estimators=None, preprocessing=None, namespace=None):
     if preprocessing:
         if isinstance(preprocessing, list):
             # Preprocessing but there's not case: force create
-            preprocessing = {'pr': preprocessing}
-            estimators = {'pr': estimators} if estimators else dict()
+            preprocessing = {"pr": preprocessing}
+            estimators = {"pr": estimators} if estimators else dict()
         preprocessing = [(n, l) for n, l in sorted(preprocessing.items())]
         namespace += [n for n, l in preprocessing]
 
@@ -211,8 +214,9 @@ def check_instances(estimators=None, preprocessing=None, namespace=None):
     if preprocessing:
         for preprocess_name, tr in sorted(preprocessing):
             if tr:
-                out_prep.append((preprocess_name,
-                                 [(n, clone(t)) for n, t in tr]))
+                out_prep.append(
+                    (preprocess_name, [(n, clone(t)) for n, t in tr])
+                )
                 cases.append(preprocess_name)
     if estimators:
         for preprocess_name, learner_name, est in estimators:
@@ -229,11 +233,15 @@ def _flatten(instances):
         flattened = [(None, name, est) for name, est in sorted(instances)]
     else:
         # Compress dictionary and sort on case_est keys
-        vps = [('%s__%s' % (case, est_name), est)
-               for case, instance_list in instances.items()
-               for est_name, est in instance_list]
-        flattened = [(name.split('__')[0], name.split('__')[1], est)
-                     for name, est in sorted(vps)]
+        vps = [
+            ("%s__%s" % (case, est_name), est)
+            for case, instance_list in instances.items()
+            for est_name, est in instance_list
+        ]
+        flattened = [
+            (name.split("__")[0], name.split("__")[1], est)
+            for name, est in sorted(vps)
+        ]
     return flattened
 
 
@@ -281,6 +289,5 @@ def _check_instances(instances, namespace=None):
     if _assert_format(instances, namespace):
         out = instances
     else:
-        out = _format_instances(
-            instances, namespace=namespace)
+        out = _format_instances(instances, namespace=namespace)
     return out

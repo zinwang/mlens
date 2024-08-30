@@ -13,7 +13,7 @@ p = np.arange(10)
 
 def test_rmse():
     """[Metrics] rmse."""
-    z  = metrics.rmse(y, p)
+    z = metrics.rmse(y, p)
     np.testing.assert_equal(np.array(z), np.array(4.5276925690687087))
 
 

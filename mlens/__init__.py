@@ -7,6 +7,7 @@
 ML-Ensemble, a Python library for memory efficient parallelized ensemble
 learning.
 """
+
 # Initialize configurations
 # pylint: disable=wildcard-import
 from .config import *

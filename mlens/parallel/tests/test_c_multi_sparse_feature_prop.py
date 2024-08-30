@@ -1,6 +1,7 @@
 """
 Test specific functionality of the parallel manager module.
 """
+
 import numpy as np
 from scipy.sparse import csr_matrix
 from mlens.index import FoldIndex
@@ -26,7 +27,6 @@ def _shuffled(X, y, seed):
 
 
 class OLSSparse(OLS):
-
     """Handle Sparse Matrices"""
 
     def fit(self, X, y):
@@ -55,8 +55,12 @@ ens2.add([OLS(0), OLS(1)], FoldIndex(), propagate_features=first_prop)
 ens2.add([OLS(2), OLS(3)], FoldIndex(), propagate_features=second_prop)
 
 ens3 = TempClass()
-ens3.add([OLSSparse(0), OLSSparse(1)], FoldIndex(), propagate_features=first_prop)
-ens3.add([OLSSparse(2), OLSSparse(3)], FoldIndex(), propagate_features=second_prop)
+ens3.add(
+    [OLSSparse(0), OLSSparse(1)], FoldIndex(), propagate_features=first_prop
+)
+ens3.add(
+    [OLSSparse(2), OLSSparse(3)], FoldIndex(), propagate_features=second_prop
+)
 
 ens4 = TempClass()
 ens4.add([OLS(), OLS(1), OLS(2)], FoldIndex(), shuffle=True, random_state=SEED)
@@ -71,16 +75,14 @@ def test_propagation_one():
     """[Parallel] Test feature propagation from original data to first layer"""
     # Check that original data is propagated through first layer
     out_1 = ens1.fit(X, y, return_preds=True)
-    np.testing.assert_array_equal(
-        out_1[:, :n_first_prop], X[:, first_prop])
+    np.testing.assert_array_equal(out_1[:, :n_first_prop], X[:, first_prop])
 
 
 def test_propagation_two():
     """[Parallel] Test feature propagation from original data to second layer"""
     # Check that original data is propagated through second layer
     out_2 = ens2.fit(X, y, return_preds=True)
-    np.testing.assert_array_equal(
-        out_2[:, :n_first_prop], X[:, first_prop])
+    np.testing.assert_array_equal(out_2[:, :n_first_prop], X[:, first_prop])
 
 
 def test_propagation_three():
@@ -88,7 +90,8 @@ def test_propagation_three():
     out_1 = ens1.fit(X, y, return_preds=True)
     out_2 = ens2.fit(X, y, return_preds=True)
     np.testing.assert_array_equal(
-        out_2[:, n_first_prop:n_second_prop], out_1[:, n_first_prop:])
+        out_2[:, n_first_prop:n_second_prop], out_1[:, n_first_prop:]
+    )
 
 
 def test_sparse():
@@ -96,8 +99,7 @@ def test_sparse():
     out_1 = ens2.fit(X, y, return_preds=True)
     Z = csr_matrix(X)
     out_2 = ens3.fit(Z, y, return_preds=True)
-    np.testing.assert_allclose(
-        out_1, out_2.toarray().astype(dtype=np.float32))
+    np.testing.assert_allclose(out_1, out_2.toarray().astype(dtype=np.float32))
 
 
 def test_shuffle():

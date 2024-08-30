@@ -12,17 +12,20 @@ from .numpy_pickle_utils import Unpickler
 
 def hex_str(an_int):
     """Convert an int to an hexadecimal string."""
-    return '{:#x}'.format(an_int)
+    return "{:#x}".format(an_int)
+
 
 if PY3_OR_LATER:
+
     def asbytes(s):
         if isinstance(s, bytes):
             return s
-        return s.encode('latin1')
+        return s.encode("latin1")
+
 else:
     asbytes = str
 
-_MAX_LEN = len(hex_str(2 ** 64))
+_MAX_LEN = len(hex_str(2**64))
 _CHUNK_SIZE = 64 * 1024
 
 
@@ -36,7 +39,7 @@ def read_zfile(file_handle):
     file_handle.seek(0)
     header_length = len(_ZFILE_PREFIX) + _MAX_LEN
     length = file_handle.read(header_length)
-    length = length[len(_ZFILE_PREFIX):]
+    length = length[len(_ZFILE_PREFIX) :]
     length = int(length, 16)
 
     # With python2 and joblib version <= 0.8.4 compressed pickle header is one
@@ -45,7 +48,7 @@ def read_zfile(file_handle):
     # space according to
     # https://tools.ietf.org/html/rfc6713#section-2.1
     next_byte = file_handle.read(1)
-    if next_byte != b' ':
+    if next_byte != b" ":
         # The zlib compressed data has started and we need to go back
         # one byte
         file_handle.seek(header_length)
@@ -55,7 +58,8 @@ def read_zfile(file_handle):
     data = zlib.decompress(file_handle.read(), 15, length)
     assert len(data) == length, (
         "Incorrect data length while decompressing %s."
-        "The file could be corrupted." % file_handle)
+        "The file could be corrupted." % file_handle
+    )
     return data
 
 
@@ -71,6 +75,7 @@ def write_zfile(file_handle, data, compress=1):
     # Store the length of the data
     file_handle.write(asbytes(length.ljust(_MAX_LEN)))
     file_handle.write(zlib.compress(asbytes(data), compress))
+
 
 ###############################################################################
 # Utility objects for persistence.
@@ -95,18 +100,21 @@ class NDArrayWrapper(object):
         # Load the array from the disk
         # use getattr instead of self.allow_mmap to ensure backward compat
         # with NDArrayWrapper instances pickled with joblib < 0.9.0
-        allow_mmap = getattr(self, 'allow_mmap', True)
-        memmap_kwargs = ({} if not allow_mmap
-                         else {'mmap_mode': unpickler.mmap_mode})
+        allow_mmap = getattr(self, "allow_mmap", True)
+        memmap_kwargs = (
+            {} if not allow_mmap else {"mmap_mode": unpickler.mmap_mode}
+        )
         array = unpickler.np.load(filename, **memmap_kwargs)
         # Reconstruct subclasses. This does not work with old
         # versions of numpy
-        if (hasattr(array, '__array_prepare__') and
-            self.subclass not in (unpickler.np.ndarray,
-                                  unpickler.np.memmap)):
+        if hasattr(array, "__array_prepare__") and self.subclass not in (
+            unpickler.np.ndarray,
+            unpickler.np.memmap,
+        ):
             # We need to reconstruct another subclass
             new_array = unpickler.np.core.multiarray._reconstruct(
-                self.subclass, (0,), 'b')
+                self.subclass, (0,), "b"
+            )
             return new_array.__array_prepare__(array)
         else:
             return array
@@ -139,7 +147,7 @@ class ZNDArrayWrapper(NDArrayWrapper):
         # arrays
         filename = os.path.join(unpickler._dirname, self.filename)
         array = unpickler.np.core.multiarray._reconstruct(*self.init_args)
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             data = read_zfile(f)
         state = self.state + (data,)
         array.__setstate__(state)
@@ -177,8 +185,10 @@ class ZipNumpyUnpickler(Unpickler):
         Unpickler.load_build(self)
         if isinstance(self.stack[-1], NDArrayWrapper):
             if self.np is None:
-                raise ImportError("Trying to unpickle an ndarray, "
-                                  "but numpy didn't import correctly")
+                raise ImportError(
+                    "Trying to unpickle an ndarray, "
+                    "but numpy didn't import correctly"
+                )
             nd_array_wrapper = self.stack.pop()
             array = nd_array_wrapper.read(self)
             self.stack.append(array)
@@ -216,7 +226,7 @@ def load_compatibility(filename):
     This function can load numpy array files saved separately during the
     dump.
     """
-    with open(filename, 'rb') as file_handle:
+    with open(filename, "rb") as file_handle:
         # We are careful to open the file handle early and keep it open to
         # avoid race-conditions on renames. That said, if data is stored in
         # companion files, moving the directory will create a race when
@@ -228,12 +238,13 @@ def load_compatibility(filename):
             # More user-friendly error message
             if PY3_OR_LATER:
                 new_exc = ValueError(
-                    'You may be trying to read with '
-                    'python 3 a joblib pickle generated with python 2. '
-                    'This feature is not supported by joblib.')
+                    "You may be trying to read with "
+                    "python 3 a joblib pickle generated with python 2. "
+                    "This feature is not supported by joblib."
+                )
                 new_exc.__cause__ = exc
                 raise new_exc
         finally:
-            if hasattr(unpickler, 'file_handle'):
+            if hasattr(unpickler, "file_handle"):
                 unpickler.file_handle.close()
         return obj

@@ -2,6 +2,7 @@
 
 Support functions for model selection suite.
 """
+
 from __future__ import division
 
 from collections import Counter
@@ -13,23 +14,24 @@ from ..externals.sklearn.base import clone
 
 def parse_key(key):
     """Helper to format keys"""
-    key = key.split('.')
-    case_est, draw = '.'.join(key[:-1]), key[-1]
+    key = key.split(".")
+    case_est, draw = ".".join(key[:-1]), key[-1]
     return case_est, draw
 
 
 def check_scorer(scorer):
     """Check that the scorer instance passed behaves as expected."""
-    if not type(scorer).__name__ in ['_PredictScorer', '_ProbaScorer']:
+    if not type(scorer).__name__ in ["_PredictScorer", "_ProbaScorer"]:
 
         raise ValueError(
             "The passes scorer does not seem to be a valid scorer. Expected "
             "type '_PredictScorer', got '%s'. Use the "
-            "mlens.metrics.make_scorer function to construct a valid scorer." %
-            type(scorer).__name__)
+            "mlens.metrics.make_scorer function to construct a valid scorer."
+            % type(scorer).__name__
+        )
 
 
-def cat(pr_name, est_name, union='.'):
+def cat(pr_name, est_name, union="."):
     """Concat preprocess and estimator name if applicable."""
     if not pr_name:
         return est_name
@@ -40,14 +42,15 @@ def set_job(estimators, preprocessing):
     """Set job to run"""
     if estimators is None:
         if preprocessing is None:
-            raise ValueError("Need to specify at least one of"
-                             "[estimators, preprocessing]")
+            raise ValueError(
+                "Need to specify at least one of" "[estimators, preprocessing]"
+            )
         else:
-            job = 'preprocess'
+            job = "preprocess"
     elif preprocessing is None:
-        job = 'evaluate'
+        job = "evaluate"
     else:
-        job = 'preprocess-evaluate'
+        job = "preprocess-evaluate"
     return job
 
 
@@ -74,24 +77,25 @@ def _format_instances(instances):
             if instance == val:
                 tup = [instance.__class__.__name__.lower(), instance]
             else:
-                tup = ['-'.join(val[0].split()).lower(), val[-1]]
+                tup = ["-".join(val[0].split()).lower(), val[-1]]
 
             named_instances.append(tup)
 
         except Exception as e:
-            msg = ("Could not format instance %s. Check that passed instance "
-                   "iterables follow correct syntax:\n"
-                   "- if multiple preprocessing cases, pass a dictionary with "
-                   "instance lists as values and case name as key.\n"
-                   "- else, pass list of (named) instances.\n"
-                   "See documentation for further information.\n"
-                   "Error details: %r")
+            msg = (
+                "Could not format instance %s. Check that passed instance "
+                "iterables follow correct syntax:\n"
+                "- if multiple preprocessing cases, pass a dictionary with "
+                "instance lists as values and case name as key.\n"
+                "- else, pass list of (named) instances.\n"
+                "See documentation for further information.\n"
+                "Error details: %r"
+            )
             raise ValueError(msg % (instance, e))
 
     # Check and correct duplicate names
     duplicates = Counter([tup[0] for tup in named_instances])
-    duplicates = {key: val for key, val in duplicates.items() if
-                  val > 1}
+    duplicates = {key: val for key, val in duplicates.items() if val > 1}
 
     out = []  # final named_instances list
 
@@ -100,7 +104,7 @@ def _format_instances(instances):
         if name in duplicates:
             current_name_count = name_count[name]  # fix before update
             name_count[name] += 1
-            name += '-%d' % current_name_count  # rename
+            name += "-%d" % current_name_count  # rename
         out.append((name, instance))
     return sorted(out)
 
@@ -144,17 +148,21 @@ def check_instances(instances):
         # We need to check the instance list of each case
         out = {}
         for case, case_list in instances.items():
-            out['-'.join(case.lower().split())] = \
-                _format_instances(case_list)
+            out["-".join(case.lower().split())] = _format_instances(case_list)
     return out
 
 
 def make_tansformers(generator, indexer, **kwargs):
     """Set up generators for the job to be performed"""
     transformers = [
-        EvalTransformer(estimator=Pipeline(pipeline, return_y=True),
-                        name=preprocess_name, indexer=indexer, **kwargs)
-        for preprocess_name, pipeline in generator]
+        EvalTransformer(
+            estimator=Pipeline(pipeline, return_y=True),
+            name=preprocess_name,
+            indexer=indexer,
+            **kwargs
+        )
+        for preprocess_name, pipeline in generator
+    ]
     return transformers
 
 
@@ -163,8 +171,14 @@ def make_learners(generator, indexer, scorer, error_score, **kwargs):
     learners = [
         EvalLearner(
             estimator=clone(est).set_params(**params),
-            preprocess=p_name, indexer=indexer,
-            name='%s.%s' % (l_name, i) if i is not None else l_name,
-            attr='predict', scorer=scorer, error_score=error_score, **kwargs)
-        for p_name, l_name, est, i, params in generator]
+            preprocess=p_name,
+            indexer=indexer,
+            name="%s.%s" % (l_name, i) if i is not None else l_name,
+            attr="predict",
+            scorer=scorer,
+            error_score=error_score,
+            **kwargs
+        )
+        for p_name, l_name, est, i, params in generator
+    ]
     return learners

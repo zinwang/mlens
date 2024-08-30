@@ -13,6 +13,7 @@ from .format_stack import format_exc
 from .my_exceptions import WorkerInterrupt, TransportableException
 from ._multiprocessing_helpers import mp
 from ._compat import with_metaclass
+
 if mp is not None:
     from .pool import MemmapingPool
     from multiprocessing.pool import ThreadPool
@@ -103,7 +104,7 @@ class SequentialBackend(ParallelBackendBase):
     def effective_n_jobs(self, n_jobs):
         """Determine the number of jobs which are going to run in parallel"""
         if n_jobs == 0:
-            raise ValueError('n_jobs == 0 in Parallel has no meaning')
+            raise ValueError("n_jobs == 0 in Parallel has no meaning")
         return 1
 
     def apply_async(self, func, callback=None):
@@ -120,7 +121,7 @@ class PoolManagerMixin(object):
     def effective_n_jobs(self, n_jobs):
         """Determine the number of jobs which are going to run in parallel"""
         if n_jobs == 0:
-            raise ValueError('n_jobs == 0 in Parallel has no meaning')
+            raise ValueError("n_jobs == 0 in Parallel has no meaning")
         elif mp is None or n_jobs is None:
             # multiprocessing is not available or disabled, fallback
             # to sequential mode
@@ -144,8 +145,11 @@ class PoolManagerMixin(object):
         """Shutdown the pool and restart a new one with the same parameters"""
         self.terminate()
         if ensure_ready:
-            self.configure(n_jobs=self.parallel.n_jobs, parallel=self.parallel,
-                           **self.parallel._backend_args)
+            self.configure(
+                n_jobs=self.parallel.n_jobs,
+                parallel=self.parallel,
+                **self.parallel._backend_args
+            )
 
 
 class AutoBatchingMixin(object):
@@ -155,7 +159,7 @@ class AutoBatchingMixin(object):
     # overhead.
     # This settings was found by running benchmarks/bench_auto_batching.py
     # with various parameters on various platforms.
-    MIN_IDEAL_BATCH_DURATION = .2
+    MIN_IDEAL_BATCH_DURATION = 0.2
 
     # Should not be too high to avoid stragglers: long jobs running alone
     # on a single worker while other workers have no work to process any more.
@@ -169,23 +173,29 @@ class AutoBatchingMixin(object):
         """Determine the optimal batch size"""
         old_batch_size = self._effective_batch_size
         batch_duration = self._smoothed_batch_duration
-        if (batch_duration > 0 and
-                batch_duration < self.MIN_IDEAL_BATCH_DURATION):
+        if (
+            batch_duration > 0
+            and batch_duration < self.MIN_IDEAL_BATCH_DURATION
+        ):
             # The current batch size is too small: the duration of the
             # processing of a batch of task is not large enough to hide
             # the scheduling overhead.
-            ideal_batch_size = int(old_batch_size *
-                                   self.MIN_IDEAL_BATCH_DURATION /
-                                   batch_duration)
+            ideal_batch_size = int(
+                old_batch_size * self.MIN_IDEAL_BATCH_DURATION / batch_duration
+            )
             # Multiply by two to limit oscilations between min and max.
             batch_size = max(2 * ideal_batch_size, 1)
             self._effective_batch_size = batch_size
             if self.parallel.verbose >= 10:
                 self.parallel._print(
                     "Batch computation too fast (%.4fs.) "
-                    "Setting batch_size=%d.", (batch_duration, batch_size))
-        elif (batch_duration > self.MAX_IDEAL_BATCH_DURATION and
-              old_batch_size >= 2):
+                    "Setting batch_size=%d.",
+                    (batch_duration, batch_size),
+                )
+        elif (
+            batch_duration > self.MAX_IDEAL_BATCH_DURATION
+            and old_batch_size >= 2
+        ):
             # The current batch size is too big. If we schedule overly long
             # running batches some CPUs might wait with nothing left to do
             # while a couple of CPUs a left processing a few long running
@@ -196,7 +206,9 @@ class AutoBatchingMixin(object):
             if self.parallel.verbose >= 10:
                 self.parallel._print(
                     "Batch computation too slow (%.4fs.) "
-                    "Setting batch_size=%d.", (batch_duration, batch_size))
+                    "Setting batch_size=%d.",
+                    (batch_duration, batch_size),
+                )
         else:
             # No batch size adjustment
             batch_size = old_batch_size
@@ -251,8 +263,9 @@ class ThreadingBackend(PoolManagerMixin, ParallelBackendBase):
         return n_jobs
 
 
-class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
-                             ParallelBackendBase):
+class MultiprocessingBackend(
+    PoolManagerMixin, AutoBatchingMixin, ParallelBackendBase
+):
     """A ParallelBackend which will use a multiprocessing.Pool.
 
     Will introduce some communication and memory overhead when exchanging
@@ -278,17 +291,19 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
             # Daemonic processes cannot have children
             if n_jobs != 1:
                 warnings.warn(
-                    'Multiprocessing-backed parallel loops cannot be nested,'
-                    ' setting n_jobs=1',
-                    stacklevel=3)
+                    "Multiprocessing-backed parallel loops cannot be nested,"
+                    " setting n_jobs=1",
+                    stacklevel=3,
+                )
             return 1
 
         if not isinstance(threading.current_thread(), threading._MainThread):
             # Prevent posix fork inside in non-main posix threads
             warnings.warn(
-                'Multiprocessing-backed parallel loops cannot be nested'
-                ' below threads, setting n_jobs=1',
-                stacklevel=3)
+                "Multiprocessing-backed parallel loops cannot be nested"
+                " below threads, setting n_jobs=1",
+                stacklevel=3,
+            )
             return 1
 
         return super(MultiprocessingBackend, self).effective_n_jobs(n_jobs)
@@ -302,15 +317,16 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
         already_forked = int(os.environ.get(self.JOBLIB_SPAWNED_PROCESS, 0))
         if already_forked:
             raise ImportError(
-                '[joblib] Attempting to do parallel computing '
-                'without protecting your import on a system that does '
-                'not support forking. To use parallel-computing in a '
+                "[joblib] Attempting to do parallel computing "
+                "without protecting your import on a system that does "
+                "not support forking. To use parallel-computing in a "
                 'script, you must protect your main loop using "if '
                 "__name__ == '__main__'"
                 '". Please see the joblib documentation on Parallel '
-                'for more information')
+                "for more information"
+            )
         # Set an environment variable to avoid infinite loops
-        os.environ[self.JOBLIB_SPAWNED_PROCESS] = '1'
+        os.environ[self.JOBLIB_SPAWNED_PROCESS] = "1"
 
         # Make sure to free as much memory as possible before forking
         gc.collect()
@@ -342,6 +358,7 @@ class SafeFunction(object):
     the full traceback is captured to make it possible to serialize
     it so that it can be rendered in a different Python process.
     """
+
     def __init__(self, func):
         self.func = func
 

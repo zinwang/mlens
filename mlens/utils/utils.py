@@ -28,6 +28,7 @@ except ImportError:
     import pickle
 
 from time import sleep
+
 try:
     # Try get performance counter
     from time import perf_counter as time
@@ -39,20 +40,20 @@ except ImportError:
 ###############################################################################
 def pickled(name):
     """Filetype enforcer"""
-    if not name.endswith('.pkl'):
-        name = '.'.join([name, 'pkl'])
+    if not name.endswith(".pkl"):
+        name = ".".join([name, "pkl"])
     return name
 
 
 def pickle_save(obj, name):
     """Utility function for pickling an object"""
-    with open(pickled(name), 'wb') as f:
+    with open(pickled(name), "wb") as f:
         pickle.dump(obj, f)
 
 
 def pickle_load(name):
     """Utility function for loading pickled object"""
-    with open(pickled(name), 'rb') as f:
+    with open(pickled(name), "rb") as f:
         return pickle.load(f)
 
 
@@ -68,15 +69,17 @@ def load(file, enforce_filetype=True):
         warnings.warn(
             "Could not load transformer at %s. Will check every %.1f seconds "
             "for %i seconds before aborting. " % (file, s, lim),
-            ParallelProcessingWarning)
+            ParallelProcessingWarning,
+        )
 
         ts = time()
         while not os.path.exists(file):
             sleep(s)
             if time() - ts > lim:
                 raise ParallelProcessingError(
-                    "Could not load transformer at %s\nDetails:\n%r" %
-                    (dir, msg))
+                    "Could not load transformer at %s\nDetails:\n%r"
+                    % (dir, msg)
+                )
 
         return pickle_load(file)
 
@@ -84,9 +87,9 @@ def load(file, enforce_filetype=True):
 ###############################################################################
 def clone_attribute(iterable, attribute):
     """clone parameters"""
-    return [(j.name, j.estimator)
-            for i in iterable
-            for j in getattr(i, attribute)]
+    return [
+        (j.name, j.estimator) for i in iterable for j in getattr(i, attribute)
+    ]
 
 
 def kwarg_parser(func, kwargs):
@@ -102,12 +105,12 @@ def kwarg_parser(func, kwargs):
 def safe_print(*objects, **kwargs):
     """Safe print function for backwards compatibility."""
     # Get stream
-    file = kwargs.pop('file', sys.stdout)
+    file = kwargs.pop("file", sys.stdout)
     if isinstance(file, str):
         file = getattr(sys, file)
 
     # Get flush
-    flush = kwargs.pop('flush', False)
+    flush = kwargs.pop("flush", False)
 
     # Print
     print(*objects, file=file, **kwargs)
@@ -117,19 +120,18 @@ def safe_print(*objects, **kwargs):
         file.flush()
 
 
-def print_time(t0, message='', **kwargs):
+def print_time(t0, message="", **kwargs):
     """Utility function for printing time"""
     if len(message) > 0:
-        message += ' | '
+        message += " | "
 
     m, s = divmod(time() - t0, 60)
     h, m = divmod(m, 60)
 
-    safe_print(message + '%02d:%02d:%02d' % (h, m, s), **kwargs)
+    safe_print(message + "%02d:%02d:%02d" % (h, m, s), **kwargs)
 
 
 class CMLog(object):
-
     """CPU and Memory logger.
 
     Class for starting a monitor job of CPU and memory utilization in the
@@ -179,9 +181,11 @@ class CMLog(object):
         self.pid = os.getpid()
 
         if psutil is None:
-            raise ImportError("psutil not installed. Install psutil, for "
-                              "example through pip (pip install psutil) "
-                              "before initializing CMLog.")
+            raise ImportError(
+                "psutil not installed. Install psutil, for "
+                "example through pip (pip install psutil) "
+                "before initializing CMLog."
+            )
 
     def monitor(self, stop=None, ival=0.1, kill=True):
         """Start monitoring CPU and memory usage.
@@ -217,18 +221,26 @@ class CMLog(object):
 
         if self.verbose:
             if self._stop is not None:
-                safe_print("[CMLog] Monitoring for {} seconds with checks "
-                           "every {} seconds.".format(stop, ival))
+                safe_print(
+                    "[CMLog] Monitoring for {} seconds with checks "
+                    "every {} seconds.".format(stop, ival)
+                )
             else:
-                safe_print("[CMLog] Monitoring until collection with checks "
-                           "every {} seconds.".format(ival))
+                safe_print(
+                    "[CMLog] Monitoring until collection with checks "
+                    "every {} seconds.".format(ival)
+                )
 
         # Initialize subprocess
         self._out = subprocess.Popen(
-            [sys.executable, '-c',
-             'from mlens.utils.utils import _recorder; '
-             '_recorder({}, {}, {})'.format(
-                 self.pid, stop, float(ival))], stdout=subprocess.PIPE)
+            [
+                sys.executable,
+                "-c",
+                "from mlens.utils.utils import _recorder; "
+                "_recorder({}, {}, {})".format(self.pid, stop, float(ival)),
+            ],
+            stdout=subprocess.PIPE,
+        )
         return
 
     def collect(self):
@@ -239,8 +251,8 @@ class CMLog(object):
         before the job finishes, _collect issues a print statement to try
         again later, but no warning or error is raised.
         """
-        if not hasattr(self, '_stop'):
-            safe_print('No monitoring job initiated: nothing to _collect.')
+        if not hasattr(self, "_stop"):
+            safe_print("No monitoring job initiated: nothing to _collect.")
             return
 
         if self._stop is None:
@@ -248,35 +260,42 @@ class CMLog(object):
             self._out.kill()
 
             if self.verbose:
-                safe_print("[CMLog] Collecting...", end=" ",  flush=True)
+                safe_print("[CMLog] Collecting...", end=" ", flush=True)
 
         # Check if job is not completed and if so, check whether to kill
         elif time() - self._t0 < self._stop:
             if self._kill:
                 if self.verbose:
-                    safe_print("[CMLog] Job not finished - killing process "
-                               "and collecting...", end=" ", flush=True)
+                    safe_print(
+                        "[CMLog] Job not finished - killing process "
+                        "and collecting...",
+                        end=" ",
+                        flush=True,
+                    )
                 self._out.kill()
 
             elif self.verbose:
                 # Wait until completion (this is done in the 'communicate'
                 # command
-                safe_print("[CMLog] Job not finished - waiting "
-                           "until completion and collecting...",
-                           end=" ",  flush=True)
+                safe_print(
+                    "[CMLog] Job not finished - waiting "
+                    "until completion and collecting...",
+                    end=" ",
+                    flush=True,
+                )
 
         # If job done, we just need to _collect
         elif self.verbose:
-            safe_print("[CMLog] Collecting...", end=" ",  flush=True)
+            safe_print("[CMLog] Collecting...", end=" ", flush=True)
 
         t0, i = time(), 0
         cpu, rss, vms = [], [], []
 
         out = self._out.communicate()
-        out = out[0].decode().strip().split('\n')
+        out = out[0].decode().strip().split("\n")
         for line in out:
 
-            c, r, v = line.split(',')
+            c, r, v = line.split(",")
 
             cpu.append(float(c.strip()))
             rss.append(int(r.strip()))
@@ -285,8 +304,10 @@ class CMLog(object):
             i += 1
 
         if self.verbose:
-            safe_print('done. Read {} lines in '
-                       '{:.3f} seconds.'.format(i, time() - t0))
+            safe_print(
+                "done. Read {} lines in "
+                "{:.3f} seconds.".format(i, time() - t0)
+            )
 
         self.cpu = array(cpu)
         self.vms = array(vms)
@@ -310,12 +331,12 @@ def _recorder(pid, stop, ival):
     if stop is None:
         while True:
             m = process.memory_info()
-            print(psutil.cpu_percent(), ',', m[0], ',', m[1])
+            print(psutil.cpu_percent(), ",", m[0], ",", m[1])
             sleep(ival)
             t = time()
     else:
         while t - t0 < stop:
             m = process.memory_info()
-            print(psutil.cpu_percent(), ',', m[0], ',', m[1])
+            print(psutil.cpu_percent(), ",", m[0], ",", m[1])
             sleep(ival)
             t = time()

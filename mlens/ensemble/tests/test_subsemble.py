@@ -2,13 +2,14 @@
 
 
 """
+
 import numpy as np
 from mlens.testing.dummy import OLS, ECM
 from mlens.testing import Data
 
 from mlens.ensemble import Subsemble, SuperLearner
 
-data = Data('subsemble', False, False, partitions=2, folds=3)
+data = Data("subsemble", False, False, partitions=2, folds=3)
 X, y = data.get_data((30, 4), 3)
 data.indexer.fit(X)
 (F, wf), (P, wp) = data.ground_truth(X, y, data.indexer.partitions)

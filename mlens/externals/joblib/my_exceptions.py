@@ -1,6 +1,7 @@
 """
 Exceptions
 """
+
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
@@ -9,8 +10,10 @@ import sys
 
 from ._compat import PY3_OR_LATER
 
+
 class JoblibException(Exception):
     """A simple exception with an error message that you can get to."""
+
     def __init__(self, *args):
         # We need to implement __init__ so that it is picked in the
         # multiple heritance hierarchy in the class created in
@@ -26,20 +29,20 @@ class JoblibException(Exception):
         Exception.__init__(self, *args)
 
     def __repr__(self):
-        if hasattr(self, 'args') and len(self.args) > 0:
+        if hasattr(self, "args") and len(self.args) > 0:
             message = self.args[0]
         else:
-            message = ''
+            message = ""
 
         name = self.__class__.__name__
-        return '%s\n%s\n%s\n%s' % (name, 75 * '_', message, 75 * '_')
+        return "%s\n%s\n%s\n%s" % (name, 75 * "_", message, 75 * "_")
 
     __str__ = __repr__
 
 
 class TransportableException(JoblibException):
     """An exception containing all the info to wrap an original
-        exception and recreate it.
+    exception and recreate it.
     """
 
     def __init__(self, message, etype):
@@ -51,9 +54,10 @@ class TransportableException(JoblibException):
 
 
 class WorkerInterrupt(Exception):
-    """ An exception that is not KeyboardInterrupt to allow subprocesses
-        to be interrupted.
+    """An exception that is not KeyboardInterrupt to allow subprocesses
+    to be interrupted.
     """
+
     pass
 
 
@@ -65,7 +69,7 @@ def _mk_exception(exception, name=None):
     # and that exception
     if name is None:
         name = exception.__name__
-    this_name = 'Joblib%s' % name
+    this_name = "Joblib%s" % name
     if this_name in _exception_mapping:
         # Avoid creating twice the same exception
         this_exception = _exception_mapping[this_name]
@@ -75,8 +79,7 @@ def _mk_exception(exception, name=None):
             # need to use multiple inheritance
             return JoblibException, this_name
         try:
-            this_exception = type(
-                this_name, (JoblibException, exception), {})
+            this_exception = type(this_name, (JoblibException, exception), {})
             _exception_mapping[this_name] = this_exception
         except TypeError:
             # This happens if "Cannot create a consistent method
@@ -92,11 +95,13 @@ def _mk_common_exceptions():
     namespace = dict()
     if PY3_OR_LATER:
         import builtins as _builtin_exceptions
+
         common_exceptions = filter(
-            lambda x: x.endswith('Error'),
-            dir(_builtin_exceptions))
+            lambda x: x.endswith("Error"), dir(_builtin_exceptions)
+        )
     else:
         import exceptions as _builtin_exceptions
+
         common_exceptions = dir(_builtin_exceptions)
 
     for name in common_exceptions:

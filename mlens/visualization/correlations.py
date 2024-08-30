@@ -19,13 +19,26 @@ try:
     from matplotlib.gridspec import GridSpec
     from seaborn import diverging_palette, heatmap
 except ImportError:
-    warnings.warn("Matplotlib and Seaborn not installed. Cannot load "
-                  "visualization module.", ImportWarning)
+    warnings.warn(
+        "Matplotlib and Seaborn not installed. Cannot load "
+        "visualization module.",
+        ImportWarning,
+    )
 
 
-def corrmat(corr, figsize=(11, 9), annotate=True, inflate=True,
-            linewidths=.5, cbar_kws='default', show=True, ax=None,
-            title='Correlation Matrix', title_font_size=14, **kwargs):
+def corrmat(
+    corr,
+    figsize=(11, 9),
+    annotate=True,
+    inflate=True,
+    linewidths=0.5,
+    cbar_kws="default",
+    show=True,
+    ax=None,
+    title="Correlation Matrix",
+    title_font_size=14,
+    **kwargs
+):
     """Function for generating color-coded correlation triangle.
 
     Parameters
@@ -77,9 +90,9 @@ def corrmat(corr, figsize=(11, 9), annotate=True, inflate=True,
     """
     if inflate:
         corr *= 100
-        fmt = '2.0f'
+        fmt = "2.0f"
     else:
-        fmt = '.2f'
+        fmt = ".2f"
 
     if cbar_kws == "default":
         cbar_kws = {"shrink": 1.0}
@@ -100,9 +113,20 @@ def corrmat(corr, figsize=(11, 9), annotate=True, inflate=True,
     cmap = diverging_palette(220, 10, as_cmap=True)
 
     # Draw the heatmap with the mask and correct aspect ratio
-    ax = heatmap(corr, mask=mask, cmap=cmap, vmin=corr.min().min(),
-                 annot=annot, fmt=fmt, vmax=corr.max().max(), square=True,
-                 linewidths=linewidths, cbar_kws=cbar_kws, ax=ax, **kwargs)
+    ax = heatmap(
+        corr,
+        mask=mask,
+        cmap=cmap,
+        vmin=corr.min().min(),
+        annot=annot,
+        fmt=fmt,
+        vmax=corr.max().max(),
+        square=True,
+        linewidths=linewidths,
+        cbar_kws=cbar_kws,
+        ax=ax,
+        **kwargs
+    )
 
     if show:
         plt.title(title, fontsize=title_font_size)
@@ -111,12 +135,21 @@ def corrmat(corr, figsize=(11, 9), annotate=True, inflate=True,
     return ax
 
 
-def clustered_corrmap(corr, cls, label_attr_name='labels_',
-                      figsize=(10, 8), annotate=False, inflate=False,
-                      linewidths=.5, cbar_kws='default', show=True,
-                      title_fontsize=14,
-                      title_name='Clustered correlation heatmap',
-                      ax=None, **kwargs):
+def clustered_corrmap(
+    corr,
+    cls,
+    label_attr_name="labels_",
+    figsize=(10, 8),
+    annotate=False,
+    inflate=False,
+    linewidths=0.5,
+    cbar_kws="default",
+    show=True,
+    title_fontsize=14,
+    title_name="Clustered correlation heatmap",
+    ax=None,
+    **kwargs
+):
     """Function for plotting a clustered correlation heatmap.
 
     Parameters
@@ -171,16 +204,20 @@ def clustered_corrmap(corr, cls, label_attr_name='labels_',
     cls.fit(corr)
 
     # Sort features on cluster membership
-    if corr.__class__.__name__ == 'DataFrame':
+    if corr.__class__.__name__ == "DataFrame":
         columns_names = corr.columns.tolist()
     else:
         columns_names = [i for i in range(corr.shape[1])]
 
-    corr_list = [tup[0] for tup in sorted(zip(columns_names,
-                                          getattr(cls, label_attr_name)),
-                                          key=lambda x: x[1])]
+    corr_list = [
+        tup[0]
+        for tup in sorted(
+            zip(columns_names, getattr(cls, label_attr_name)),
+            key=lambda x: x[1],
+        )
+    ]
 
-    if corr.__class__.__name__ == 'DataFrame':
+    if corr.__class__.__name__ == "DataFrame":
         corr = corr.loc[corr_list, corr_list]
     else:
         corr = corr[np.ix_(corr_list, corr_list)]
@@ -188,9 +225,9 @@ def clustered_corrmap(corr, cls, label_attr_name='labels_',
     # Prepare figure
     if inflate:
         corr *= 100
-        fmt = '2.0f'
+        fmt = "2.0f"
     else:
-        fmt = '.2f'
+        fmt = ".2f"
 
     if cbar_kws == "default":
         cbar_kws = {"shrink": 1.0}
@@ -205,9 +242,19 @@ def clustered_corrmap(corr, cls, label_attr_name='labels_',
     if ax is None:
         _, ax = plt.subplots(figsize=figsize)
 
-    ax = heatmap(corr, cmap=cmap, vmin=corr.min().min(),
-                 annot=annot, fmt=fmt, vmax=corr.max().max(), square=True,
-                 linewidths=linewidths, cbar_kws=cbar_kws, ax=ax, **kwargs)
+    ax = heatmap(
+        corr,
+        cmap=cmap,
+        vmin=corr.min().min(),
+        annot=annot,
+        fmt=fmt,
+        vmax=corr.max().max(),
+        square=True,
+        linewidths=linewidths,
+        cbar_kws=cbar_kws,
+        ax=ax,
+        **kwargs
+    )
 
     if show:
         plt.title(title_name, fontsize=title_fontsize)
@@ -216,8 +263,17 @@ def clustered_corrmap(corr, cls, label_attr_name='labels_',
     return ax
 
 
-def corr_X_y(X, y, top=5, figsize=(10, 8), fontsize=12, hspace=None,
-             no_ticks=True, label_rotation=0, show=True):
+def corr_X_y(
+    X,
+    y,
+    top=5,
+    figsize=(10, 8),
+    fontsize=12,
+    hspace=None,
+    no_ticks=True,
+    label_rotation=0,
+    show=True,
+):
     """Function for plotting input feature correlations with output.
 
     Output figure shows all correlations as well as top pos and neg.
@@ -256,7 +312,7 @@ def corr_X_y(X, y, top=5, figsize=(10, 8), fontsize=12, hspace=None,
     ax : object
         axis object.
     """
-    if not X.__class__.__name__ == 'DataFrame':
+    if not X.__class__.__name__ == "DataFrame":
         raise ValueError("Expected 'X' to be pandas DataFrame.")
 
     # Prep pairwise correlations
@@ -279,31 +335,44 @@ def corr_X_y(X, y, top=5, figsize=(10, 8), fontsize=12, hspace=None,
 
     # Axes
     ax0 = plt.subplot(gs[0, 0])
-    ax0.bar(range(top), corr.iloc[:top], align='center')
-    ax0.axhline(0, color='black', linewidth=0.5)
-    ax0.set_title('Top %i positive pairwise correlation coefficients' % top,
-                  fontsize=fontsize)
-    plt.xticks(range(top), names[:top], rotation=label_rotation,
-               fontsize=fontsize - 1)
+    ax0.bar(range(top), corr.iloc[:top], align="center")
+    ax0.axhline(0, color="black", linewidth=0.5)
+    ax0.set_title(
+        "Top %i positive pairwise correlation coefficients" % top,
+        fontsize=fontsize,
+    )
+    plt.xticks(
+        range(top), names[:top], rotation=label_rotation, fontsize=fontsize - 1
+    )
 
     ax1 = plt.subplot(gs[0, 1])
-    ax1.bar(range(top), corr.iloc[-top:], align='center')
-    ax1.axhline(0, color='black', linewidth=0.5)
-    ax1.set_title('Top %i negative pairwise correlation coefficients' % top,
-                  fontsize=fontsize)
-    plt.xticks(range(top), names[-top:], rotation=label_rotation,
-               fontsize=fontsize - 1)
+    ax1.bar(range(top), corr.iloc[-top:], align="center")
+    ax1.axhline(0, color="black", linewidth=0.5)
+    ax1.set_title(
+        "Top %i negative pairwise correlation coefficients" % top,
+        fontsize=fontsize,
+    )
+    plt.xticks(
+        range(top),
+        names[-top:],
+        rotation=label_rotation,
+        fontsize=fontsize - 1,
+    )
 
     ax2 = plt.subplot(gs[1, :])
-    ax2.bar(range(len(corr)), corr, align='center')
-    ax2.axhline(0, color='black', linewidth=0.5)
-    ax2.set_title('All pairwise correlation coefficients', fontsize=fontsize)
+    ax2.bar(range(len(corr)), corr, align="center")
+    ax2.axhline(0, color="black", linewidth=0.5)
+    ax2.set_title("All pairwise correlation coefficients", fontsize=fontsize)
 
     if no_ticks:
         ax2.set_xticks([], [])
     else:
-        plt.xticks(range(len(names)), names,
-                   rotation=label_rotation, fontsize=fontsize - 1)
+        plt.xticks(
+            range(len(names)),
+            names,
+            rotation=label_rotation,
+            fontsize=fontsize - 1,
+        )
 
     if show:
         plt.show()

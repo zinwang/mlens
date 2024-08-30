@@ -3,6 +3,7 @@
 We use a distinct module to simplify import statements and avoid introducing
 circular dependencies (for instance for the assert_spawning name).
 """
+
 import os
 import warnings
 
@@ -10,7 +11,7 @@ import warnings
 # Obtain possible configuration from the environment, assuming 1 (on)
 # by default, upon 0 set to None. Should instructively fail if some non
 # 0/1 value is set.
-mp = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
+mp = int(os.environ.get("JOBLIB_MULTIPROCESSING", 1)) or None
 if mp:
     try:
         import multiprocessing as mp
@@ -25,7 +26,7 @@ if mp is not None:
         del _sem  # cleanup
     except (ImportError, OSError) as e:
         mp = None
-        warnings.warn('%s.  joblib will operate in serial mode' % (e,))
+        warnings.warn("%s.  joblib will operate in serial mode" % (e,))
 
 
 # 3rd stage: backward compat for the assert_spawning helper

@@ -37,6 +37,7 @@ with the lower case name of the environmental variable to change.
 Changing global configurations in-session is experimental: Please report any
 unexpected behavior.
 """
+
 # pylint: disable=protected-access
 # pylint: disable=global-statement
 # pylint: disable=not-callable
@@ -57,14 +58,14 @@ import numpy
 ###############################################################################
 # Variables
 
-_DTYPE = getattr(numpy, os.environ.get('MLENS_DTYPE', 'float32'))
-_TMPDIR = os.environ.get('MLENS_TMPDIR', tempfile.gettempdir())
-_PREFIX = os.environ.get('MLENS_PREFIX', ".mlens_tmp_cache_")
-_BACKEND = os.environ.get('MLENS_BACKEND', 'threading')
-_START_METHOD = os.environ.get('MLENS_START_METHOD', '')
-_VERBOSE = os.environ.get('MLENS_VERBOSE', 'Y')
+_DTYPE = getattr(numpy, os.environ.get("MLENS_DTYPE", "float32"))
+_TMPDIR = os.environ.get("MLENS_TMPDIR", tempfile.gettempdir())
+_PREFIX = os.environ.get("MLENS_PREFIX", ".mlens_tmp_cache_")
+_BACKEND = os.environ.get("MLENS_BACKEND", "threading")
+_START_METHOD = os.environ.get("MLENS_START_METHOD", "")
+_VERBOSE = os.environ.get("MLENS_VERBOSE", "Y")
 
-_IVALS = os.environ.get('MLENS_IVALS', '0.01_120').split('_')
+_IVALS = os.environ.get("MLENS_IVALS", "0.01_120").split("_")
 _IVALS = (float(_IVALS[0]), float(_IVALS[1]))
 
 _PY_VERSION = float(sysconfig._PY_VERSION_SHORT)
@@ -72,6 +73,7 @@ _PY_VERSION = float(sysconfig._PY_VERSION_SHORT)
 
 ###############################################################################
 # dispatcjh configs
+
 
 def get_ivals():
     """Return _IVALS"""
@@ -101,6 +103,7 @@ def get_start_method():
 def get_tmpdir():
     """Return start method"""
     return _TMPDIR
+
 
 ###############################################################################
 # Configuration calls
@@ -164,7 +167,7 @@ def set_start_method(method):
     """
     global _START_METHOD
     _START_METHOD = method
-    os.environ['JOBLIB_START_METHOD'] = _START_METHOD
+    os.environ["JOBLIB_START_METHOD"] = _START_METHOD
 
 
 def set_ivals(interval, limit):
@@ -185,17 +188,18 @@ def set_ivals(interval, limit):
 def __get_default_start_method(method):
     """Determine default backend."""
     # Check for environmental variables
-    win = sys.platform.startswith('win') or sys.platform.startswith('cygwin')
-    if method == '':
-        method = 'fork' if not win else 'spawn'
+    win = sys.platform.startswith("win") or sys.platform.startswith("cygwin")
+    if method == "":
+        method = "fork" if not win else "spawn"
     return method
+
 
 ###############################################################################
 # Handlers
 
 
 def clear_cache(tmp):
-    """ Check that cache directory is empty.
+    """Check that cache directory is empty.
 
     Checks that a specified directory do not contain any directories with
     the ML-Ensemble temporary cache signature. Attempts to remove any found
@@ -207,8 +211,9 @@ def clear_cache(tmp):
         the directory to check for residual caches in.
     """
     global _PREFIX
-    residuals = [i for i in os.walk(tmp)
-                 if os.path.split(i[0])[-1].startswith(_PREFIX)]
+    residuals = [
+        i for i in os.walk(tmp) if os.path.split(i[0])[-1].startswith(_PREFIX)
+    ]
 
     n = len(residuals)
     if n > 0:
@@ -221,21 +226,27 @@ def clear_cache(tmp):
 
             print("        %i (%i): %s" % (i + 1, s, res[0]), file=sys.stderr)
 
-        print("        Total size: %i\n[MLENS] Removing..." % size,
-              end=" ", file=sys.stderr)
+        print(
+            "        Total size: %i\n[MLENS] Removing..." % size,
+            end=" ",
+            file=sys.stderr,
+        )
 
         for res in residuals:
             try:
                 shutil.rmtree(res[0])
             except OSError:
                 try:
-                    subprocess.Popen('rmdir /S /Q %s' % res[0],
-                                     shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE)
+                    subprocess.Popen(
+                        "rmdir /S /Q %s" % res[0],
+                        shell=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
                 except OSError:
                     warnings.warn("Failed to delete cache at %s." % res[0])
         print("done.", file=sys.stderr)
+
 
 ###############################################################################
 # Set up
@@ -243,11 +254,11 @@ def clear_cache(tmp):
 
 def print_settings():
     """Print package settings on system."""
-    if _VERBOSE != 'Y':
+    if _VERBOSE != "Y":
         return
-    if _BACKEND == 'threading':
+    if _BACKEND == "threading":
         msg = "[MLENS] backend: %s"
-        arg = _BACKEND,
+        arg = (_BACKEND,)
     else:
         msg = "[MLENS] backend: %s | start method: %s"
         arg = (_BACKEND, _START_METHOD)
@@ -255,7 +266,7 @@ def print_settings():
     print(msg % arg, file=sys.stderr)
 
 
-if current_process().name == 'MainProcess':
+if current_process().name == "MainProcess":
     _START_METHOD = __get_default_start_method(_START_METHOD)
     set_start_method(_START_METHOD)
 

@@ -9,4 +9,4 @@ Auxiliary transformers to support computational graphs.
 
 from .preprocess import Subset, Shift
 
-__all__ = ['Subset', 'Shift']
+__all__ = ["Subset", "Shift"]

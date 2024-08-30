@@ -15,7 +15,6 @@ from ..utils import kwarg_parser
 
 
 class SequentialEnsemble(BaseEnsemble):
-
     r"""Sequential Ensemble class.
 
     The Sequential Ensemble class allows users to build ensembles with
@@ -114,15 +113,32 @@ class SequentialEnsemble(BaseEnsemble):
     """
 
     def __init__(
-            self, shuffle=False, random_state=None, scorer=None,
-            raise_on_exception=True, array_check=None, verbose=False, n_jobs=-1,
-            backend=None, model_selection=False, sample_size=20, layers=None):
+        self,
+        shuffle=False,
+        random_state=None,
+        scorer=None,
+        raise_on_exception=True,
+        array_check=None,
+        verbose=False,
+        n_jobs=-1,
+        backend=None,
+        model_selection=False,
+        sample_size=20,
+        layers=None,
+    ):
         super(SequentialEnsemble, self).__init__(
-            shuffle=shuffle, random_state=random_state, scorer=scorer,
-            raise_on_exception=raise_on_exception, verbose=verbose,
-            n_jobs=n_jobs, layers=layers, array_check=array_check,
-            model_selection=model_selection, sample_size=sample_size,
-            backend=backend)
+            shuffle=shuffle,
+            random_state=random_state,
+            scorer=scorer,
+            raise_on_exception=raise_on_exception,
+            verbose=verbose,
+            n_jobs=n_jobs,
+            layers=layers,
+            array_check=array_check,
+            model_selection=model_selection,
+            sample_size=sample_size,
+            backend=backend,
+        )
 
     def add_meta(self, estimator, **kwargs):
         """Meta Learner.
@@ -137,7 +153,7 @@ class SequentialEnsemble(BaseEnsemble):
         **kwargs : optional
             optional keyword arguments.
         """
-        return self.add(cls='full', estimators=estimator, meta=True, **kwargs)
+        return self.add(cls="full", estimators=estimator, meta=True, **kwargs)
 
     def add(self, cls, estimators, preprocessing=None, meta=False, **kwargs):
         """Add layer to ensemble.
@@ -216,11 +232,13 @@ class SequentialEnsemble(BaseEnsemble):
             ensemble instance with layer instantiated.
         """
         if cls not in INDEXERS:
-            raise NotImplementedError("Layer class not implemented. Select "
-                                      "one of %r." % sorted(INDEXERS))
+            raise NotImplementedError(
+                "Layer class not implemented. Select "
+                "one of %r." % sorted(INDEXERS)
+            )
 
-        if cls == 'subsemble' and 'partition_estimator' in kwargs:
-            cls = 'clusteredsubsemble'
+        if cls == "subsemble" and "partition_estimator" in kwargs:
+            cls = "clusteredsubsemble"
 
         # instantiate the indexer
         indexer = INDEXERS[cls]
@@ -228,5 +246,8 @@ class SequentialEnsemble(BaseEnsemble):
         indexer = indexer(**kwargs_idx)
 
         return super(SequentialEnsemble, self).add(
-            estimators=estimators, indexer=indexer,
-            preprocessing=preprocessing, **kwargs)
+            estimators=estimators,
+            indexer=indexer,
+            preprocessing=preprocessing,
+            **kwargs
+        )

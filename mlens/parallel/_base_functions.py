@@ -6,6 +6,7 @@
 
 Functions for base computations
 """
+
 from __future__ import division
 
 import os
@@ -27,11 +28,13 @@ def load(path, name, raise_on_exception=True):
         if not obj:
             raise ValueError(
                 "No preprocessing pipeline in cache. Auxiliary Transformer "
-                "have not cached pipelines, or cached to another sub-cache.")
+                "have not cached pipelines, or cached to another sub-cache."
+            )
         elif not len(obj) == 1:
             raise ValueError(
                 "Could not load unique preprocessing pipeline. "
-                "Transformer and/or Learner names are not unique")
+                "Transformer and/or Learner names are not unique"
+            )
         obj = obj[0]
     else:
         raise ValueError("Expected str or list. Got %r" % path)
@@ -50,16 +53,20 @@ def save(path, name, obj):
 def prune_files(path, name):
     """Utility for safely selecting only relevant files"""
     if isinstance(path, str):
-        files = [os.path.join(path, f)
-                 for f in os.listdir(path)
-                 if name == '.'.join(f.split('.')[:-3])]
+        files = [
+            os.path.join(path, f)
+            for f in os.listdir(path)
+            if name == ".".join(f.split(".")[:-3])
+        ]
         files = [pickle_load(f) for f in sorted(files)]
     elif isinstance(path, list):
-        files = [tup[1] for tup in sorted(path, key=lambda x: x[0])
-                 if name == '.'.join(tup[0].split('.')[:-2])]
+        files = [
+            tup[1]
+            for tup in sorted(path, key=lambda x: x[0])
+            if name == ".".join(tup[0].split(".")[:-2])
+        ]
     else:
-        raise ValueError(
-            "Expected name of cache or cache list. Got %r" % path)
+        raise ValueError("Expected name of cache or cache list. Got %r" % path)
     return files
 
 
@@ -67,7 +74,7 @@ def replace(source_files):
     """Utility function to replace empty files list"""
     replace_files = list(source_files)
     for o in replace_files:
-        o.name = o.name[:-1] + '0'
+        o.name = o.name[:-1] + "0"
         o.index = (o.index[0], 0)
         o.out_index = None
         o.in_index = None
@@ -90,7 +97,8 @@ def mold_objects(learners, transformers):
 
 
 def set_output_columns(
-        objects, n_partitions, multiplier, n_left_concats, target=None):
+    objects, n_partitions, multiplier, n_left_concats, target=None
+):
     """Set output columns on objects.
 
     Parameters
@@ -116,8 +124,7 @@ def set_output_columns(
     """
     col_index = n_left_concats
     col_map = list()
-    sorted_learners = {obj.name:
-                       obj for obj in objects}
+    sorted_learners = {obj.name: obj for obj in objects}
     for _, obj in sorted(sorted_learners.items()):
         col_dict = dict()
 
@@ -132,8 +139,8 @@ def set_output_columns(
         raise ValueError(
             "Mismatch feature size in prediction array (%i) "
             "and max column index implied by learner "
-            "predictions sizes (%i)" %
-            (target, col_index - 1))
+            "predictions sizes (%i)" % (target, col_index - 1)
+        )
 
     for obj, col_dict in col_map:
         obj.output_columns = col_dict
@@ -143,14 +150,14 @@ def _safe_slice(array, idx):
     """Slice an array safely along the row axis"""
     if array is None:
         return array
-    elif hasattr(array, 'iloc'):
+    elif hasattr(array, "iloc"):
         return array.iloc[idx]
     return array[idx]
 
 
 def slice_array(x, y, idx, r=0):
     """Build training array index and slice data."""
-    if idx == 'all':
+    if idx == "all":
         idx = None
 
     if idx:
@@ -189,14 +196,14 @@ def slice_array(x, y, idx, r=0):
 
 def assign_predictions(pred, p, tei, col, n):
     """Assign predictions to prediction array."""
-    if tei == 'all':
+    if tei == "all":
         tei = None
 
     if tei is None:
         if len(p.shape) == 1:
             pred[:, col] = p
         else:
-            pred[:, col:(col + p.shape[1])] = p
+            pred[:, col : (col + p.shape[1])] = p
     else:
         r = n - pred.shape[0]
 
@@ -222,8 +229,11 @@ def score_predictions(y, p, scorer, name, inst_name):
         try:
             s = scorer(y, p)
         except Exception as exc:
-            warnings.warn("[%s] Could not score %s. Details:\n%r" %
-                          (name, inst_name, exc), MetricWarning)
+            warnings.warn(
+                "[%s] Could not score %s. Details:\n%r"
+                % (name, inst_name, exc),
+                MetricWarning,
+            )
     return s
 
 
@@ -268,9 +278,10 @@ def check_params(lpar, rpar):
         otherwise.
     """
     # Expand estimator parameters
-    if hasattr(lpar, 'get_params'):
-        return check_params(lpar.get_params(deep=True),
-                            rpar.get_params(deep=True))
+    if hasattr(lpar, "get_params"):
+        return check_params(
+            lpar.get_params(deep=True), rpar.get_params(deep=True)
+        )
 
     # Flatten dicts (also OrderedDicts)
     if isinstance(lpar, dict):
@@ -309,8 +320,10 @@ def check_params(lpar, rpar):
 
     if not _pass:
         warnings.warn(
-            "Parameter value (%r) has changed since model was fitted (%r)." %
-            (lpar, rpar), ParameterChangeWarning)
+            "Parameter value (%r) has changed since model was fitted (%r)."
+            % (lpar, rpar),
+            ParameterChangeWarning,
+        )
 
     return _pass
 
@@ -320,5 +333,7 @@ def check_stack(new_items, stack):
     names = [st.name for st in stack]
     for item in new_items:
         if item.name in names:
-            raise ValueError("Name (%s) already exists in stack. "
-                             "Rename before attempting to push." % item.name)
+            raise ValueError(
+                "Name (%s) already exists in stack. "
+                "Rename before attempting to push." % item.name
+            )

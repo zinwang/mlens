@@ -14,7 +14,6 @@ from ..index import TemporalIndex, FullIndex
 
 
 class TemporalEnsemble(BaseEnsemble):
-
     r"""Temporal ensemble class.
 
     The temporal ensemble class uses a time series cross-validation
@@ -144,15 +143,34 @@ class TemporalEnsemble(BaseEnsemble):
     """
 
     def __init__(
-            self, step_size=1, burn_in=None, window=None, lag=0, scorer=None,
-            raise_on_exception=True, array_check=None, verbose=False, n_jobs=-1,
-            backend='threading', model_selection=False, sample_size=20, layers=None):
+        self,
+        step_size=1,
+        burn_in=None,
+        window=None,
+        lag=0,
+        scorer=None,
+        raise_on_exception=True,
+        array_check=None,
+        verbose=False,
+        n_jobs=-1,
+        backend="threading",
+        model_selection=False,
+        sample_size=20,
+        layers=None,
+    ):
         super(TemporalEnsemble, self).__init__(
-            shuffle=False, random_state=None, scorer=scorer,
-            raise_on_exception=raise_on_exception, verbose=verbose,
-            n_jobs=n_jobs, layers=layers, backend=backend,
-            array_check=array_check, model_selection=model_selection,
-            sample_size=sample_size)
+            shuffle=False,
+            random_state=None,
+            scorer=scorer,
+            raise_on_exception=raise_on_exception,
+            verbose=verbose,
+            n_jobs=n_jobs,
+            layers=layers,
+            backend=backend,
+            array_check=array_check,
+            model_selection=model_selection,
+            sample_size=sample_size,
+        )
 
         self.__initialized__ = 0  # Unlock parameter setting
         self.step_size = step_size
@@ -176,8 +194,15 @@ class TemporalEnsemble(BaseEnsemble):
         """
         return self.add(estimators=estimator, meta=True, **kwargs)
 
-    def add(self, estimators, preprocessing=None,
-            proba=False, meta=False, propagate_features=None, **kwargs):
+    def add(
+        self,
+        estimators,
+        preprocessing=None,
+        proba=False,
+        meta=False,
+        propagate_features=None,
+        **kwargs
+    ):
         """Add layer to ensemble.
 
         Parameters
@@ -261,16 +286,22 @@ class TemporalEnsemble(BaseEnsemble):
         self : instance
             ensemble instance with layer instantiated.
         """
-        s = kwargs.pop('step_size', self.step_size)
-        b = kwargs.pop('burn_in', self.burn_in)
-        w = kwargs.pop('window', self.window)
-        l = kwargs.pop('lag', self.lag)
+        s = kwargs.pop("step_size", self.step_size)
+        b = kwargs.pop("burn_in", self.burn_in)
+        w = kwargs.pop("window", self.window)
+        l = kwargs.pop("lag", self.lag)
         if meta:
             idx = FullIndex()
         else:
             idx = TemporalIndex(
-                s, b, w, l, raise_on_exception=self.raise_on_exception)
+                s, b, w, l, raise_on_exception=self.raise_on_exception
+            )
 
         return super(TemporalEnsemble, self).add(
-            estimators=estimators, indexer=idx, preprocessing=preprocessing,
-            proba=proba, propagate_features=propagate_features, **kwargs)
+            estimators=estimators,
+            indexer=idx,
+            preprocessing=preprocessing,
+            proba=proba,
+            propagate_features=propagate_features,
+            **kwargs
+        )

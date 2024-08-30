@@ -23,31 +23,45 @@ from ..index import INDEXERS
 from ..ensemble.base import Sequential
 from ..estimators import LayerEnsemble
 from ..parallel import (
-    ParallelProcessing, Learner, Transformer, Layer, make_group, Pipeline)
+    ParallelProcessing,
+    Learner,
+    Transformer,
+    Layer,
+    make_group,
+    Pipeline,
+)
 
 ##############################################################################
-PREPROCESSING = {'no': [], 'sc': [('scale', Scale())]}
+PREPROCESSING = {"no": [], "sc": [("scale", Scale())]}
 
-ESTIMATORS = {'sc': [('offs', OLS(offset=2)), ('null', OLS())],
-              'no': [('offs', OLS(offset=2)), ('null', OLS())]}
+ESTIMATORS = {
+    "sc": [("offs", OLS(offset=2)), ("null", OLS())],
+    "no": [("offs", OLS(offset=2)), ("null", OLS())],
+}
 
-ESTIMATORS_PROBA = {'sc': [('offs', LogisticRegression(offset=2)),
-                           ('null', LogisticRegression())],
-                    'no': [('offs', LogisticRegression(offset=2)),
-                           ('null', LogisticRegression())]}
+ESTIMATORS_PROBA = {
+    "sc": [
+        ("offs", LogisticRegression(offset=2)),
+        ("null", LogisticRegression()),
+    ],
+    "no": [
+        ("offs", LogisticRegression(offset=2)),
+        ("null", LogisticRegression()),
+    ],
+}
 
 
-ECM = [('ols-%i' % i, OLS(offset=i)) for i in range(4)]
-ECM_PROBA = [('lr-%i' % i, LogisticRegression(offset=i)) for i in range(4)]
+ECM = [("ols-%i" % i, OLS(offset=i)) for i in range(4)]
+ECM_PROBA = [("lr-%i" % i, LogisticRegression(offset=i)) for i in range(4)]
 
 
-def mae(y, p): return np.mean((y - p) ** 2)
+def mae(y, p):
+    return np.mean((y - p) ** 2)
 
 
 ##############################################################################
 # pylint: disable=too-few-public-methods
 class InitMixin(object):
-
     """Mixin to make a mlens ensemble behave as Scikit-learn estimator.
 
     Scikit-learn expects an estimator to be fully initialized when
@@ -95,13 +109,12 @@ class InitMixin(object):
 
         # Build an ensemble consisting of two OLS estimators in the first
         # layer, and a single on top.
-        getattr(self, 'add')([OLS(offset=1), OLS(offset=2)])
-        getattr(self, 'add_meta')(OLS())
+        getattr(self, "add")([OLS(offset=1), OLS(offset=2)])
+        getattr(self, "add_meta")(OLS())
 
 
 ###############################################################################
 class EstimatorContainer(object):
-
     """Class for generating architectures of various types."""
 
     def __init__(self):
@@ -127,14 +140,20 @@ class EstimatorContainer(object):
         if preprocessing:
             transformer = Transformer(
                 estimator=Pipeline(Scale(), return_y=True),
-                indexer=indexer, name='sc')
+                indexer=indexer,
+                name="sc",
+            )
         else:
             transformer = None
 
-        learner = Learner(estimator=est, indexer=indexer,
-                          preprocess='sc' if transformer else None,
-                          scorer=mae if not proba else None,
-                          name=kls, proba=proba)
+        learner = Learner(
+            estimator=est,
+            indexer=indexer,
+            preprocess="sc" if transformer else None,
+            scorer=mae if not proba else None,
+            name=kls,
+            proba=proba,
+        )
 
         return learner, transformer
 
@@ -154,10 +173,12 @@ class EstimatorContainer(object):
         """
         indexer, kwargs = self.load_indexer(kls, args, kwargs)
 
-        learner_kwargs = {'proba': kwargs.pop('proba', proba),
-                          'scorer': kwargs.pop('scorer', None)}
+        learner_kwargs = {
+            "proba": kwargs.pop("proba", proba),
+            "scorer": kwargs.pop("scorer", None),
+        }
 
-        layer = Layer(name='layer', dtype=np.float64, **kwargs)
+        layer = Layer(name="layer", dtype=np.float64, **kwargs)
 
         if preprocessing:
             ests = ESTIMATORS_PROBA if proba else ESTIMATORS
@@ -166,8 +187,9 @@ class EstimatorContainer(object):
             ests = ECM_PROBA if proba else ECM
             prep = []
 
-        group = make_group(indexer, ests, prep,
-                           learner_kwargs=learner_kwargs, name='group')
+        group = make_group(
+            indexer, ests, prep, learner_kwargs=learner_kwargs, name="group"
+        )
         layer.push(group)
         return layer
 
@@ -187,8 +209,10 @@ class EstimatorContainer(object):
         """
         indexer, kwargs = self.load_indexer(kls, args, kwargs)
 
-        learner_kwargs = {'proba': kwargs.pop('proba', proba),
-                          'scorer': kwargs.pop('scorer', None)}
+        learner_kwargs = {
+            "proba": kwargs.pop("proba", proba),
+            "scorer": kwargs.pop("scorer", None),
+        }
 
         if preprocessing:
             ests = ESTIMATORS_PROBA if proba else ESTIMATORS
@@ -197,8 +221,7 @@ class EstimatorContainer(object):
             ests = ECM_PROBA if proba else ECM
             prep = []
 
-        group = make_group(indexer, ests, prep,
-                           learner_kwargs=learner_kwargs)
+        group = make_group(indexer, ests, prep, learner_kwargs=learner_kwargs)
         layer = LayerEnsemble([group], dtype=np.float64, **kwargs)
         return layer
 
@@ -217,7 +240,7 @@ class EstimatorContainer(object):
             layer with preprocessing cases
         """
         lyr = self.get_layer(kls, proba, preprocessing, *args, **kwargs)
-        lyr.name += '-1'
+        lyr.name += "-1"
         seq = Sequential()
         return seq.push(lyr)
 
@@ -234,11 +257,11 @@ class EstimatorContainer(object):
 
 
 class Data(object):
-
     """Class for getting data."""
 
-    def __init__(self, cls, proba, preprocessing, is_learner=False,
-                 *args, **kwargs):
+    def __init__(
+        self, cls, proba, preprocessing, is_learner=False, *args, **kwargs
+    ):
         self.lr = is_learner
         self.proba = proba
         self.preprocessing = preprocessing
@@ -265,7 +288,7 @@ class Data(object):
         s = shape[0]
         w = shape[1]
 
-        train = np.array(range(int(s * w)), dtype='float').reshape((s, w))
+        train = np.array(range(int(s * w)), dtype="float").reshape((s, w))
         train += 1
 
         labels = np.zeros(train.shape[0])
@@ -273,7 +296,7 @@ class Data(object):
         if not self.proba:
             increment = 10
             for i in range(0, s, m):
-                labels[i:i + m] += increment
+                labels[i : i + m] += increment
 
                 increment += 10
 
@@ -301,7 +324,7 @@ class Data(object):
         if feature_prop:
             P = np.hstack([X[:, :feature_prop], P])
 
-        if self.indexer.__class__.__name__.lower() == 'fullindex':
+        if self.indexer.__class__.__name__.lower() == "fullindex":
             return (P, weights_p), (P, weights_p)
 
         F, weights_f = self._folded_ests(X, y, subsets)
@@ -313,14 +336,14 @@ class Data(object):
 
     def _set_up_est(self, y):
         """Get estimators, preprocessing, num_ests, predict attr to use."""
-        attr = 'predict_proba' if self.proba else 'predict'
+        attr = "predict_proba" if self.proba else "predict"
         labels = len(np.unique(y)) if self.proba else 1
 
         if self.preprocessing:
             if self.lr:
                 est = OLS() if not self.proba else LogisticRegression()
-                ests = {'sc': [('est', est)]}
-                prep = {'sc': [('scale', Scale())]}
+                ests = {"sc": [("est", est)]}
+                prep = {"sc": [("scale", Scale())]}
             else:
                 ests = ESTIMATORS_PROBA if self.proba else ESTIMATORS
                 prep = PREPROCESSING
@@ -333,16 +356,16 @@ class Data(object):
         else:
             if self.lr:
                 est = OLS() if not self.proba else LogisticRegression()
-                ests = {'no-case': [('ols', est)]}
+                ests = {"no-case": [("ols", est)]}
             else:
-                ests = {'no-case': ECM_PROBA if self.proba else ECM}
-            prep = {'no-case': []}
+                ests = {"no-case": ECM_PROBA if self.proba else ECM}
+            prep = {"no-case": []}
 
-            n_ests = len(ests['no-case'])
+            n_ests = len(ests["no-case"])
 
         self.classes_ = labels
         self.n_pred = n_ests
-        if self.cls == 'subsemble':
+        if self.cls == "subsemble":
             self.n_pred *= self.indexer.partitions
 
         return ests, prep, n_ests, attr, labels
@@ -362,9 +385,7 @@ class Data(object):
         col_ass = 0
 
         # Sort at every occasion
-        vps = [(c, e[0])
-               for c in prep.keys()
-               for e in ests[c]]
+        vps = [(c, e[0]) for c in prep.keys() for e in ests[c]]
 
         for meta_key in sorted(vps):
             key, est_name = meta_key
@@ -376,8 +397,8 @@ class Data(object):
                 else:
                     i = 0
 
-                if '%s-%s-%s' % (i, key, est_name) not in col_id:
-                    col_id['%s-%s-%s' % (i, key, est_name)] = col_ass
+                if "%s-%s-%s" % (i, key, est_name) not in col_id:
+                    col_id["%s-%s-%s" % (i, key, est_name)] = col_ass
                     col_ass += labels
 
                 xtrain = X[tri]
@@ -401,9 +422,9 @@ class Data(object):
                 fix = tei - rebase
 
                 if labels == 1:
-                    F[fix, col_id['%s-%s-%s' % (i, key, est_name)]] = p
+                    F[fix, col_id["%s-%s-%s" % (i, key, est_name)]] = p
                 else:
-                    c = col_id['%s-%s-%s' % (i, key, est_name)]
+                    c = col_id["%s-%s-%s" % (i, key, est_name)]
                     F[np.ix_(fix, np.arange(c, c + labels))] = p
 
         return F, weights
@@ -423,15 +444,13 @@ class Data(object):
         col_id = {}
         col_ass = 0
 
-        vps = ['%s__%s' % (c, e[0])
-               for c in prep.keys()
-               for e in ests[c]]
+        vps = ["%s__%s" % (c, e[0]) for c in prep.keys() for e in ests[c]]
         for meta_key in sorted(vps):
-            key, est_name = meta_key.split('__')
+            key, est_name = meta_key.split("__")
             est = dict(ests[key])[est_name]
             for i, tri in enumerate(indexer.partition(as_array=True)):
-                if '%s-%s-%s' % (i, key, est_name) not in col_id:
-                    col_id['%s-%s-%s' % (i, key, est_name)] = col_ass
+                if "%s-%s-%s" % (i, key, est_name) not in col_id:
+                    col_id["%s-%s-%s" % (i, key, est_name)] = col_ass
                     col_ass += labels
 
                 # Transform input
@@ -452,17 +471,16 @@ class Data(object):
 
                 # Predict
                 p = getattr(e, attr)(xtest)
-                c = col_id['%s-%s-%s' % (i, key, est_name)]
+                c = col_id["%s-%s-%s" % (i, key, est_name)]
                 if labels == 1:
                     P[:, c] = p
                 else:
-                    P[:, c:c + labels] = p
+                    P[:, c : c + labels] = p
 
         return P, weights
 
 
 class DummyPartition(object):
-
     """Dummy class to generate tri."""
 
     def __init__(self, tri):
@@ -476,8 +494,8 @@ class DummyPartition(object):
 ###############################################################################
 def _get_path(backend, is_learner):
     """Helper to get a path dir"""
-    if backend in ['manual', 'multiprocessing']:
-        path = os.path.join(os.getcwd(), '.mlens_testing_tmp')
+    if backend in ["manual", "multiprocessing"]:
+        path = os.path.join(os.getcwd(), ".mlens_testing_tmp")
         if os.path.exists(path):
             shutil.rmtree(path)
         os.mkdir(path)
@@ -489,44 +507,47 @@ def _get_path(backend, is_learner):
 def get_learner(case, *args, **kwargs):
     """Generator function for test"""
     data = Data(*args, is_learner=True, **kwargs)
-    p = getattr(data.indexer, 'partitions', 1)
+    p = getattr(data.indexer, "partitions", 1)
     X, y = data.get_data((12, 4), 2)
     (F, wf), (H, wh) = data.ground_truth(X, y, p)
     data.indexer.fit(X)
 
     learner, transformer = EstimatorContainer().get_learner(
-        *args, classes=data.classes_, **kwargs)
+        *args, classes=data.classes_, **kwargs
+    )
 
-    return {'fit': ('fit', learner, transformer, X, y, F, wf),
-            'predict': ('predict', learner, transformer, X, y, H, wh),
-            'transform': ('transform', learner, transformer, X, y, F, wf)}[case]
+    return {
+        "fit": ("fit", learner, transformer, X, y, F, wf),
+        "predict": ("predict", learner, transformer, X, y, H, wh),
+        "transform": ("transform", learner, transformer, X, y, F, wf),
+    }[case]
 
 
 def run_learner(job, learner, transformer, X, y, F, wf=None):
     """Sub-routine for running learner job"""
-    if job != 'fit':
-        run_learner('fit', learner, transformer, X, y, F)
+    if job != "fit":
+        run_learner("fit", learner, transformer, X, y, F)
 
     P = np.zeros(F.shape)
 
-    path = _get_path('manual', is_learner=True)
+    path = _get_path("manual", is_learner=True)
     args = {
-        'dir': path,
-        'job': job,
-        'auxiliary': {'X': X, 'y': y} if job == 'fit' else {'X': X},
-        'main': {'X': X, 'y': y, 'P': P} if job == 'fit' else {'X': X, 'P': P}
-        }
+        "dir": path,
+        "job": job,
+        "auxiliary": {"X": X, "y": y} if job == "fit" else {"X": X},
+        "main": {"X": X, "y": y, "P": P} if job == "fit" else {"X": X, "P": P},
+    }
 
     if transformer:
         transformer.setup(X, y, job)
-        for obj in transformer(args, 'auxiliary'):
+        for obj in transformer(args, "auxiliary"):
             obj()
 
     learner.setup(X, y, job)
-    for obj in learner(args, 'main'):
+    for obj in learner(args, "main"):
         obj()
 
-    if job == 'fit':
+    if job == "fit":
         learner.collect()
         if transformer:
             transformer.collect()
@@ -535,10 +556,12 @@ def run_learner(job, learner, transformer, X, y, F, wf=None):
         try:
             shutil.rmtree(path)
         except OSError:
-            warnings.warn("Failed to destroy temporary test cache at %s" % path)
+            warnings.warn(
+                "Failed to destroy temporary test cache at %s" % path
+            )
 
     if wf is not None:
-        if job in ['fit', 'transform']:
+        if job in ["fit", "transform"]:
             lrs = learner.sublearners
         else:
             lrs = learner.learner
@@ -547,77 +570,93 @@ def run_learner(job, learner, transformer, X, y, F, wf=None):
         np.testing.assert_array_equal(w, wf)
 
 
-def get_layer(job, backend, case, proba, preprocess, feature_prop=None, **kwargs):
+def get_layer(
+    job, backend, case, proba, preprocess, feature_prop=None, **kwargs
+):
     """Generator function for test"""
     data = Data(case, proba, preprocess, **kwargs)
-    p = getattr(data.indexer, 'partitions', 1)
+    p = getattr(data.indexer, "partitions", 1)
     X, y = data.get_data(shape=(12, 4), m=2)
     (F, wf), (H, wh) = data.ground_truth(X, y, p, feature_prop=feature_prop)
     data.indexer.fit(X)
 
     prop = range(feature_prop) if feature_prop else None
     layer = EstimatorContainer().get_layer(
-        kls=case, proba=proba, preprocessing=preprocess,
-        backend=backend, propagate_features=prop, **kwargs)
+        kls=case,
+        proba=proba,
+        preprocessing=preprocess,
+        backend=backend,
+        propagate_features=prop,
+        **kwargs
+    )
 
-    return {'fit': ('fit', layer, X, y, F, wf),
-            'predict': ('predict', layer, X, y, H, wh),
-            'transform': ('transform', layer, X, y, F, wf)}[job]
+    return {
+        "fit": ("fit", layer, X, y, F, wf),
+        "predict": ("predict", layer, X, y, H, wh),
+        "transform": ("transform", layer, X, y, F, wf),
+    }[job]
 
 
 def run_layer(job, layer, X, y, F, wf=None):
     """Sub-routine for running learner job"""
-    if job != 'fit':
-        run_layer('fit', layer, X, y, F)
+    if job != "fit":
+        run_layer("fit", layer, X, y, F)
 
     P = np.zeros(F.shape)
 
     path = _get_path(layer.backend, is_learner=False)
     args = {
-        'dir': path,
-        'job': job,
-        'auxiliary': {'X': X, 'y': y} if job == 'fit' else {'X': X},
-        'main': {'X': X, 'y': y, 'P': P} if job == 'fit' else {'X': X, 'P': P}
-        }
+        "dir": path,
+        "job": job,
+        "auxiliary": {"X": X, "y": y} if job == "fit" else {"X": X},
+        "main": {"X": X, "y": y, "P": P} if job == "fit" else {"X": X, "P": P},
+    }
 
-    if layer.backend == 'manual':
+    if layer.backend == "manual":
         # Run manually
         layer.setup(X, y, job)
         if layer.transformers:
             for transformer in layer.transformers:
-                for subtransformer in transformer(args, 'auxiliary'):
+                for subtransformer in transformer(args, "auxiliary"):
                     subtransformer()
         for learner in layer.learners:
-            for sublearner in learner(args, 'main'):
+            for sublearner in learner(args, "main"):
                 sublearner()
 
-        if job == 'fit':
+        if job == "fit":
             layer.collect()
 
     else:
-        args = (X, y) if job == 'fit' else (X,)
+        args = (X, y) if job == "fit" else (X,)
         with ParallelProcessing(layer.backend, layer.n_jobs) as manager:
             P = manager.map(layer, job, *args, path=path, return_preds=True)
 
-    if isinstance(path, str) and layer.backend == 'manual':
+    if isinstance(path, str) and layer.backend == "manual":
         try:
             shutil.rmtree(path)
         except OSError:
             warnings.warn(
-                "Failed to destroy temporary test cache at %s" % path)
+                "Failed to destroy temporary test cache at %s" % path
+            )
 
     if wf is not None:
-        if job in ['fit', 'transform']:
-            w = [obj.estimator.coef_
-                 for lr in layer.learners for obj in lr.sublearners]
+        if job in ["fit", "transform"]:
+            w = [
+                obj.estimator.coef_
+                for lr in layer.learners
+                for obj in lr.sublearners
+            ]
         else:
-            w = [obj.estimator.coef_
-                 for lr in layer.learners for obj in lr.learner]
+            w = [
+                obj.estimator.coef_
+                for lr in layer.learners
+                for obj in lr.learner
+            ]
         np.testing.assert_array_equal(P, F)
         np.testing.assert_array_equal(w, wf)
 
-        assert P.__class__.__name__ == 'ndarray'
-        assert w[0].__class__.__name__ == 'ndarray'
+        assert P.__class__.__name__ == "ndarray"
+        assert w[0].__class__.__name__ == "ndarray"
 
 
 def return_pickled(model):
@@ -625,5 +664,5 @@ def return_pickled(model):
     loc = str(np.random.randint(0, 1000000))
     pickle_save(model, loc)
     model = pickle_load(loc)
-    os.remove(loc + '.pkl')
+    os.remove(loc + ".pkl")
     return model

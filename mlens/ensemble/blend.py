@@ -14,7 +14,6 @@ from ..index import BlendIndex, FullIndex
 
 
 class BlendEnsemble(BaseEnsemble):
-
     r"""Blend Ensemble class.
 
     The Blend Ensemble is a supervised ensemble closely related to
@@ -165,14 +164,33 @@ class BlendEnsemble(BaseEnsemble):
     """
 
     def __init__(
-            self, test_size=0.5, shuffle=False, random_state=None, scorer=None,
-            raise_on_exception=True, array_check=None, verbose=False, n_jobs=-1,
-            backend=None, model_selection=False, sample_size=20, layers=None):
+        self,
+        test_size=0.5,
+        shuffle=False,
+        random_state=None,
+        scorer=None,
+        raise_on_exception=True,
+        array_check=None,
+        verbose=False,
+        n_jobs=-1,
+        backend=None,
+        model_selection=False,
+        sample_size=20,
+        layers=None,
+    ):
         super(BlendEnsemble, self).__init__(
-            shuffle=shuffle, random_state=random_state, scorer=scorer,
-            raise_on_exception=raise_on_exception, array_check=array_check,
-            verbose=verbose, n_jobs=n_jobs, model_selection=model_selection,
-            sample_size=sample_size, layers=layers, backend=backend)
+            shuffle=shuffle,
+            random_state=random_state,
+            scorer=scorer,
+            raise_on_exception=raise_on_exception,
+            array_check=array_check,
+            verbose=verbose,
+            n_jobs=n_jobs,
+            model_selection=model_selection,
+            sample_size=sample_size,
+            layers=layers,
+            backend=backend,
+        )
 
         self.__initialized__ = 0  # Unlock parameter setting
         self.test_size = test_size
@@ -194,8 +212,15 @@ class BlendEnsemble(BaseEnsemble):
         """
         return self.add(estimators=estimator, meta=True, **kwargs)
 
-    def add(self, estimators, preprocessing=None,
-            proba=False, meta=False, propagate_features=None, **kwargs):
+    def add(
+        self,
+        estimators,
+        preprocessing=None,
+        proba=False,
+        meta=False,
+        propagate_features=None,
+        **kwargs
+    ):
         """Add layer to ensemble.
 
         Parameters
@@ -278,9 +303,14 @@ class BlendEnsemble(BaseEnsemble):
         if meta:
             idx = FullIndex()
         else:
-            c = kwargs.pop('test_size', self.test_size)
+            c = kwargs.pop("test_size", self.test_size)
             idx = BlendIndex(c, raise_on_exception=self.raise_on_exception)
 
         return super(BlendEnsemble, self).add(
-            estimators=estimators, preprocessing=preprocessing, indexer=idx,
-            proba=proba, propagate_features=propagate_features, **kwargs)
+            estimators=estimators,
+            preprocessing=preprocessing,
+            indexer=idx,
+            proba=proba,
+            propagate_features=propagate_features,
+            **kwargs
+        )

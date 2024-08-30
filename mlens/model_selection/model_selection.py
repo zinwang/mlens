@@ -6,6 +6,7 @@
 
 Model selection suite for tuning and benchmarking a set of estimators.
 """
+
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 
@@ -14,8 +15,15 @@ from __future__ import division, with_statement
 import warnings
 import numpy as np
 
-from ._base_functions import (parse_key, set_job, cat, check_scorer,
-                              make_learners, make_tansformers, check_instances)
+from ._base_functions import (
+    parse_key,
+    set_job,
+    cat,
+    check_scorer,
+    make_learners,
+    make_tansformers,
+    check_instances,
+)
 from ..index import FoldIndex
 from ..parallel import ParallelEvaluation
 from ..parallel.base import BaseBackend, IndexMixin
@@ -36,8 +44,9 @@ except ImportError:
     _dict = dict
 
 
-def benchmark(X, y, scorer, cv, estimators,
-              preprocessing, error_score=None, **kwargs):
+def benchmark(
+    X, y, scorer, cv, estimators, preprocessing, error_score=None, **kwargs
+):
     """Benchmark estimators across preprocessing pipelines.
 
     :func:`benchmark` runs cross validation scoring of a set of estimators,
@@ -109,7 +118,6 @@ def benchmark(X, y, scorer, cv, estimators,
 
 
 class BaseEval(IndexMixin, BaseBackend):
-
     """Base Evaluation class."""
 
     def __init__(self, verbose=False, array_check=None, **kwargs):
@@ -120,7 +128,8 @@ class BaseEval(IndexMixin, BaseBackend):
         if array_check is not None:
             warnings.warn(
                 "array checking is deprecated. The array_check argument will be removed in 0.2.4.",
-                DeprecationWarning)
+                DeprecationWarning,
+            )
 
     def __iter__(self):
         """Provide jobs for ParallelEvaluation manager"""
@@ -130,50 +139,53 @@ class BaseEval(IndexMixin, BaseBackend):
         """Process eval"""
         if self.verbose:
             f = "stdout" if self.verbose < 20 else "stderr"
-            safe_print('Launching job', file=f)
+            safe_print("Launching job", file=f)
             t0 = time()
 
-        if 'preprocess' in case or self._transformers:
+        if "preprocess" in case or self._transformers:
             # Second test is for already fitted pipes - need to be cached
             if self.verbose >= 2:
                 safe_print(self._print_prep_start(), file=f)
                 t1 = time()
 
-            self._run('transformers', parallel, args)
-            if 'preprocess' in case:
-                self.collect(args['dir'], 'transformers')
+            self._run("transformers", parallel, args)
+            if "preprocess" in case:
+                self.collect(args["dir"], "transformers")
 
             if self.verbose >= 2:
-                print_time(t1, '{:<13} done'.format('Preprocessing'), file=f)
+                print_time(t1, "{:<13} done".format("Preprocessing"), file=f)
 
-        if 'evaluate' in case:
+        if "evaluate" in case:
             if self.verbose >= 2:
                 safe_print(self._print_eval_start(), file=f)
                 t1 = time()
 
-            self._run('estimators', parallel, args)
-            self.collect(args['dir'], 'estimators')
+            self._run("estimators", parallel, args)
+            self.collect(args["dir"], "estimators")
 
             if self.verbose >= 2:
-                print_time(t1, '{:<13} done'.format('Evaluation'), file=f)
+                print_time(t1, "{:<13} done".format("Evaluation"), file=f)
 
         if self.verbose:
-            print_time(t0, '{:<13} done'.format('Job'), file=f)
+            print_time(t0, "{:<13} done".format("Job"), file=f)
 
     def _run(self, case, parallel, args):
         """Process eval"""
-        path = args['dir']
-        _threading = self.backend == 'threading'
+        path = args["dir"]
+        _threading = self.backend == "threading"
 
-        if case == 'transformers':
+        if case == "transformers":
             generator = self._transformers
-            inp = 'auxiliary'
+            inp = "auxiliary"
         else:
             generator = self._learners
-            inp = 'main'
+            inp = "main"
 
-        parallel(delayed(subtask, not _threading)()
-                 for task in generator for subtask in task(args, inp))
+        parallel(
+            delayed(subtask, not _threading)()
+            for task in generator
+            for subtask in task(args, inp)
+        )
 
     def _fit(self, X, y, job):
         with ParallelEvaluation(self.backend, self.n_jobs) as manager:
@@ -181,10 +193,10 @@ class BaseEval(IndexMixin, BaseBackend):
 
     def collect(self, path, case):
         """Collect cache estimators"""
-        if case == 'transformers':
+        if case == "transformers":
             for transformer in self._transformers:
                 transformer.collect(path)
-        if case == 'estimators':
+        if case == "estimators":
             for learner in self._learners:
                 learner.collect(path)
 
@@ -206,7 +218,6 @@ class BaseEval(IndexMixin, BaseBackend):
 
 
 class Benchmark(BaseEval):
-
     """Benchmark engine without hyper-parameter grid search.
 
     A simplified version of the :class:`Evaluator` that performs a single
@@ -229,8 +240,16 @@ class Benchmark(BaseEval):
         self.results = None
         self.indexer = None
 
-    def fit(self, X, y, scorer, cv, estimators,
-            preprocessing=None, error_score=None):
+    def fit(
+        self,
+        X,
+        y,
+        scorer,
+        cv,
+        estimators,
+        preprocessing=None,
+        error_score=None,
+    ):
         """Run benchmarking job on given data with given estimators.
 
         Fit preprocessing if applicable and evaluate estimators if applicable.
@@ -293,16 +312,23 @@ class Benchmark(BaseEval):
         assert_correct_format(estimators, preprocessing)
         if preprocessing is not None:
             self._transformers = make_tansformers(
-                sorted(check_instances(preprocessing).items()), self.indexer,
-                verbose=max(0, self.verbose - 14))
+                sorted(check_instances(preprocessing).items()),
+                self.indexer,
+                verbose=max(0, self.verbose - 14),
+            )
 
         generator = [
             (p_name, l_name, est, None, {})
-            for p_name, l_name, est in _flatten(check_instances(estimators))]
+            for p_name, l_name, est in _flatten(check_instances(estimators))
+        ]
 
         self._learners = make_learners(
-            generator, self.indexer, scorer, error_score,
-            verbose=max(0, self.verbose - 14))
+            generator,
+            self.indexer,
+            scorer,
+            error_score,
+            verbose=max(0, self.verbose - 14),
+        )
 
         job = set_job(estimators, preprocessing)
         self._fit(X, y, job)
@@ -311,7 +337,6 @@ class Benchmark(BaseEval):
 
 
 class Evaluator(BaseEval):
-
     r"""Model selection across several estimators and preprocessing pipelines.
 
     The :class:`Evaluator` allows users to evaluate several models in one call
@@ -382,8 +407,16 @@ class Evaluator(BaseEval):
     """
 
     def __init__(
-            self, scorer, cv=2, shuffle=True, random_state=None,
-            error_score=None, metrics=None, verbose=False, **kwargs):
+        self,
+        scorer,
+        cv=2,
+        shuffle=True,
+        random_state=None,
+        error_score=None,
+        metrics=None,
+        verbose=False,
+        **kwargs
+    ):
         super(Evaluator, self).__init__(**kwargs)
 
         check_scorer(scorer)
@@ -407,8 +440,15 @@ class Evaluator(BaseEval):
         self.params = None
         self.results = None
 
-    def fit(self, X, y, estimators=None, param_dicts=None,
-            n_iter=2, preprocessing=None):
+    def fit(
+        self,
+        X,
+        y,
+        estimators=None,
+        param_dicts=None,
+        n_iter=2,
+        preprocessing=None,
+    ):
         """Fit
 
         Fit preprocessing if applicable and evaluate estimators if applicable.
@@ -496,15 +536,17 @@ class Evaluator(BaseEval):
     def _initialize(self, job, estimators, preprocessing, param_dicts, n_iter):
         """Set up generators for the job to be performed"""
         if preprocessing and isinstance(preprocessing, list):
-            preprocessing = {'pr': preprocessing}
+            preprocessing = {"pr": preprocessing}
 
-        if 'preprocess' in job:
+        if "preprocess" in job:
             self._preprocessing = check_instances(preprocessing)
             self._transformers = make_tansformers(
-                sorted(self._preprocessing.items()), self.indexer,
-                verbose=max(0, self.verbose - 14))
+                sorted(self._preprocessing.items()),
+                self.indexer,
+                verbose=max(0, self.verbose - 14),
+            )
 
-        if 'evaluate' in job:
+        if "evaluate" in job:
             estimators = check_instances(estimators)
             estimators, param_dicts = self._format(estimators, param_dicts)
             self._estimators = estimators
@@ -515,11 +557,16 @@ class Evaluator(BaseEval):
             generator = [
                 (p_name, l_name, est, i, params)
                 for p_name, l_name, est in _flatten(self._estimators)
-                for i, params in enumerate(self.params[cat(p_name, l_name)])]
+                for i, params in enumerate(self.params[cat(p_name, l_name)])
+            ]
 
             self._learners = make_learners(
-                generator, self.indexer, self.scorer,
-                self.error_score, verbose=max(0, self.verbose - 14))
+                generator,
+                self.indexer,
+                self.scorer,
+                self.error_score,
+                verbose=max(0, self.verbose - 14),
+            )
 
     def _format(self, estimators, param_dicts):
         """Ensure estimator object and param_dict object have right format."""
@@ -530,25 +577,28 @@ class Evaluator(BaseEval):
         # Set parameter draws for each case
         if isinstance(estimators, list):
             # Cast estimators to all cases
-            estimators = {k: [(n, clone(e)) for n, e in estimators]
-                          for k in preprocessing}
+            estimators = {
+                k: [(n, clone(e)) for n, e in estimators]
+                for k in preprocessing
+            }
 
         # Build params per case
         params = dict()
         for key, pars in param_dicts.items():
-            splitted = key.split('.')
+            splitted = key.split(".")
             if len(splitted) == 2:
                 if splitted[0] not in preprocessing:
                     raise ValueError(
                         "invalid param_dict . Valid keys are "
                         "'case_name.est_name' or 'est_name'. "
                         "Failed on key entry {}.\n"
-                        "All keys: {}".format(key, list(preprocessing)))
+                        "All keys: {}".format(key, list(preprocessing))
+                    )
                 params[key] = pars
             else:
                 # have an est_name key entry. Need to generate
                 for case in preprocessing.keys():
-                    key_ = '%s.%s' % (case, key)
+                    key_ = "%s.%s" % (case, key)
                     if key_ in params:
                         # We do not want to overwrite user-specified dists
                         continue
@@ -576,13 +626,14 @@ class Evaluator(BaseEval):
     def _set_params(self, param_dicts, key):
         """Try to set params, and if failure set an empty list."""
         try:
-            self.params[key] = \
-                self._draw_params(param_dicts[key])
+            self.params[key] = self._draw_params(param_dicts[key])
         except KeyError:
             # No param draws desired. Set empty dict.
-            warnings.warn("No valid parameters found for {}. Will fit and "
-                          "score once with given parameter "
-                          "settings.".format(key))
+            warnings.warn(
+                "No valid parameters found for {}. Will fit and "
+                "score once with given parameter "
+                "settings.".format(key)
+            )
             self.params[key] = [{}]
 
     def _draw_param_dicts(self, param_dicts):
@@ -602,7 +653,8 @@ class Evaluator(BaseEval):
                 for case in self._preprocessing:
                     for est_name, _ in self._estimators[case]:
                         self._set_params(
-                            param_dicts, '%s.%s' % (case, est_name))
+                            param_dicts, "%s.%s" % (case, est_name)
+                        )
             else:
                 for est_name, _ in self._estimators:
                     self._set_params(param_dicts, est_name)
@@ -617,48 +669,52 @@ class Evaluator(BaseEval):
                 case_est, _ = parse_key(k)
                 best[key][case_est] = None
 
-        best['params'] = _dict()
-        for k in data['test_score-m'].keys():
+        best["params"] = _dict()
+        for k in data["test_score-m"].keys():
             case_est, _ = parse_key(k)
-            best['params'][case_est] = None
+            best["params"][case_est] = None
 
-        for key, score in data['test_score-m'].items():
+        for key, score in data["test_score-m"].items():
             case_est, draw = parse_key(key)
 
-            old_score = best['test_score-m'][case_est]
+            old_score = best["test_score-m"][case_est]
             if old_score is None or score > old_score:
-                best['test_score-m'][case_est] = score
+                best["test_score-m"][case_est] = score
                 for k, val in data.items():
                     best[k][case_est] = val[key]
 
-                best['params'][case_est] = self.params[case_est][int(draw)]
+                best["params"][case_est] = self.params[case_est][int(draw)]
 
         self.results = Data(best, decimals=3)
 
     def _print_prep_start(self):
         """Print preprocessing start and return timer."""
-        msg = 'Preprocessing %i preprocessing pipelines over %i CV folds'
+        msg = "Preprocessing %i preprocessing pipelines over %i CV folds"
 
-        p = len(getattr(self, '_preprocessing', [1]))
+        p = len(getattr(self, "_preprocessing", [1]))
         c = self.cv if isinstance(self.cv, int) else self.cv.folds
         return msg % (p, c)
 
     def _print_eval_start(self):
         """Print initiation message and return timer."""
-        preprocessing = getattr(self, '_preprocessing', None)
+        preprocessing = getattr(self, "_preprocessing", None)
 
         if preprocessing is None:
 
-            msg = ('Evaluating %i models for %i parameter draws over %i '
-                   'CV folds, totalling %i fits')
+            msg = (
+                "Evaluating %i models for %i parameter draws over %i "
+                "CV folds, totalling %i fits"
+            )
 
             e, c, tot = self._get_count(preprocessing)
             return msg % (e, self.n_iter, c, tot)
         else:
 
-            msg = ('Evaluating %i models for %i parameter draws over %i' +
-                   ' preprocessing pipelines and %i CV folds, '
-                   'totalling %i fits')
+            msg = (
+                "Evaluating %i models for %i parameter draws over %i"
+                + " preprocessing pipelines and %i CV folds, "
+                "totalling %i fits"
+            )
 
             e, p, c, tot = self._get_count(preprocessing)
             return msg % (e, self.n_iter, p, c, tot)

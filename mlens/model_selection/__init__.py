@@ -15,4 +15,4 @@ pipelines for next-layer model selection.
 
 from .model_selection import BaseEval, Evaluator, Benchmark, benchmark
 
-__all__ = ['BaseEval', 'Evaluator', 'Benchmark', 'benchmark']
+__all__ = ["BaseEval", "Evaluator", "Benchmark", "benchmark"]

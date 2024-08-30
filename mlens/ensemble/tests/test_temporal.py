@@ -3,6 +3,7 @@
 Place holder for more rigorous tests.
 
 """
+
 import numpy as np
 from mlens.metrics import rmse
 from mlens.testing.dummy import Data, ESTIMATORS, PREPROCESSING, OLS
@@ -13,7 +14,7 @@ LEN = 20
 WIDTH = 2
 MOD = 2
 
-data = Data('temporal', False, True, step_size=5, window=10, lag=2)
+data = Data("temporal", False, True, step_size=5, window=10, lag=2)
 X, y = data.get_data((LEN, WIDTH), MOD)
 
 (F, wf), (P, wp) = data.ground_truth(X, y)

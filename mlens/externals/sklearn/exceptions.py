@@ -4,15 +4,17 @@ The :mod:`sklearn.exceptions` module includes all custom warnings and error
 classes used across scikit-learn.
 """
 
-__all__ = ['NotFittedError',
-           'ChangedBehaviorWarning',
-           'ConvergenceWarning',
-           'DataConversionWarning',
-           'DataDimensionalityWarning',
-           'EfficiencyWarning',
-           'FitFailedWarning',
-           'NonBLASDotWarning',
-           'UndefinedMetricWarning']
+__all__ = [
+    "NotFittedError",
+    "ChangedBehaviorWarning",
+    "ConvergenceWarning",
+    "DataConversionWarning",
+    "DataDimensionalityWarning",
+    "EfficiencyWarning",
+    "FitFailedWarning",
+    "NonBLASDotWarning",
+    "UndefinedMetricWarning",
+]
 
 
 class NotFittedError(ValueError, AttributeError):

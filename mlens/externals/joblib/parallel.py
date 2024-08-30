@@ -1,6 +1,7 @@
 """
 Helpers for embarrassingly parallel code.
 """
+
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
@@ -17,6 +18,7 @@ import itertools
 from numbers import Integral
 from contextlib import contextmanager
 import warnings
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -30,8 +32,12 @@ from .format_stack import format_outer_frames
 from .logger import Logger, short_format_time
 from .my_exceptions import TransportableException, _mk_exception
 from .disk import memstr_to_bytes
-from ._parallel_backends import (FallbackToBackend, MultiprocessingBackend,
-                                 ThreadingBackend, SequentialBackend)
+from ._parallel_backends import (
+    FallbackToBackend,
+    MultiprocessingBackend,
+    ThreadingBackend,
+    SequentialBackend,
+)
 from ._compat import _basestring
 
 # Make sure that those two classes are part of the public joblib.parallel API
@@ -40,14 +46,14 @@ from ._parallel_backends import AutoBatchingMixin  # noqa
 from ._parallel_backends import ParallelBackendBase  # noqa
 
 BACKENDS = {
-    'multiprocessing': MultiprocessingBackend,
-    'threading': ThreadingBackend,
-    'sequential': SequentialBackend,
+    "multiprocessing": MultiprocessingBackend,
+    "threading": ThreadingBackend,
+    "sequential": SequentialBackend,
 }
 
 # name of the backend used by default by Parallel outside of any context
 # managed by ``parallel_backend``.
-DEFAULT_BACKEND = 'multiprocessing'
+DEFAULT_BACKEND = "multiprocessing"
 DEFAULT_N_JOBS = 1
 
 # Thread local value that can be overriden by the ``parallel_backend`` context
@@ -57,7 +63,7 @@ _backend = threading.local()
 
 def get_active_backend():
     """Return the active default backend"""
-    active_backend_and_jobs = getattr(_backend, 'backend_and_jobs', None)
+    active_backend_and_jobs = getattr(_backend, "backend_and_jobs", None)
     if active_backend_and_jobs is not None:
         return active_backend_and_jobs
     # We are outside of the scope of any parallel_backend context manager,
@@ -97,14 +103,14 @@ def parallel_backend(backend, n_jobs=-1, **backend_params):
     """
     if isinstance(backend, _basestring):
         backend = BACKENDS[backend](**backend_params)
-    old_backend_and_jobs = getattr(_backend, 'backend_and_jobs', None)
+    old_backend_and_jobs = getattr(_backend, "backend_and_jobs", None)
     try:
         _backend.backend_and_jobs = (backend, n_jobs)
         # return the backend instance to make it easier to write tests
         yield backend, n_jobs
     finally:
         if old_backend_and_jobs is None:
-            if getattr(_backend, 'backend_and_jobs', None) is not None:
+            if getattr(_backend, "backend_and_jobs", None) is not None:
                 del _backend.backend_and_jobs
         else:
             _backend.backend_and_jobs = old_backend_and_jobs
@@ -115,10 +121,10 @@ def parallel_backend(backend, n_jobs=-1, **backend_params):
 # to set an environment variable to switch the default start method from
 # 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
 # of causing semantic changes and some additional pool instantiation overhead.
-if hasattr(mp, 'get_context'):
+if hasattr(mp, "get_context"):
     method = get_start_method().strip() or None
     if method is None:
-        method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
+        method = os.environ.get("JOBLIB_START_METHOD", "").strip() or None
     DEFAULT_MP_CONTEXT = mp.get_context(method=method)
 else:
     DEFAULT_MP_CONTEXT = None
@@ -151,11 +157,12 @@ def cpu_count():
 ###############################################################################
 # For verbosity
 
-def _verbosity_filter(index, verbose):
-    """ Returns False for indices increasingly apart, the distance
-        depending on the value of verbose.
 
-        We use a lag increasing as the square of index
+def _verbosity_filter(index, verbose):
+    """Returns False for indices increasingly apart, the distance
+    depending on the value of verbose.
+
+    We use a lag increasing as the square of index
     """
     if not verbose:
         return True
@@ -163,10 +170,10 @@ def _verbosity_filter(index, verbose):
         return False
     if index == 0:
         return False
-    verbose = .5 * (11 - verbose) ** 2
+    verbose = 0.5 * (11 - verbose) ** 2
     scale = sqrt(index / verbose)
     next_scale = sqrt((index + 1) / verbose)
-    return (int(next_scale) == int(scale))
+    return int(next_scale) == int(scale)
 
 
 ###############################################################################
@@ -188,10 +195,11 @@ def delayed(function, check_pickle=True):
 
     def delayed_function(*args, **kwargs):
         return function, args, kwargs
+
     try:
         delayed_function = functools.wraps(function)(delayed_function)
     except AttributeError:
-        " functools.wraps fails on some callable objects "
+        "functools.wraps fails on some callable objects"
     return delayed_function
 
 
@@ -207,6 +215,7 @@ class BatchCompletionCallBack(object):
     processed.
 
     """
+
     def __init__(self, dispatch_timestamp, batch_size, parallel):
         self.dispatch_timestamp = dispatch_timestamp
         self.batch_size = batch_size
@@ -216,8 +225,9 @@ class BatchCompletionCallBack(object):
         self.parallel.n_completed_tasks += self.batch_size
         this_batch_duration = time.time() - self.dispatch_timestamp
 
-        self.parallel._backend.batch_completed(self.batch_size,
-                                               this_batch_duration)
+        self.parallel._backend.batch_completed(
+            self.batch_size, this_batch_duration
+        )
         self.parallel.print_progress()
         if self.parallel._original_iterator is not None:
             self.parallel.dispatch_next()
@@ -274,7 +284,7 @@ def effective_n_jobs(n_jobs=-1):
 
 ###############################################################################
 class Parallel(Logger):
-    ''' Helper class for readable parallel mapping.
+    """ Helper class for readable parallel mapping.
 
         Parameters
         -----------
@@ -473,10 +483,20 @@ class Parallel(Logger):
         [Parallel(n_jobs=2)]: Done 5 out of 6 | elapsed:  0.0s remaining: 0.0s
         [Parallel(n_jobs=2)]: Done 6 out of 6 | elapsed:  0.0s finished
 
-    '''
-    def __init__(self, n_jobs=1, backend=None, verbose=0, timeout=None,
-                 pre_dispatch='2 * n_jobs', batch_size='auto',
-                 temp_folder=None, max_nbytes='1M', mmap_mode='r'):
+    """
+
+    def __init__(
+        self,
+        n_jobs=1,
+        backend=None,
+        verbose=0,
+        timeout=None,
+        pre_dispatch="2 * n_jobs",
+        batch_size="auto",
+        temp_folder=None,
+        max_nbytes="1M",
+        mmap_mode="r",
+    ):
         active_backend, default_n_jobs = get_active_backend()
         if backend is None and n_jobs == 1:
             # If we are under a parallel_backend context manager, look up
@@ -497,34 +517,40 @@ class Parallel(Logger):
             verbose=max(0, self.verbose - 50),
         )
         if DEFAULT_MP_CONTEXT is not None:
-            self._backend_args['context'] = DEFAULT_MP_CONTEXT
+            self._backend_args["context"] = DEFAULT_MP_CONTEXT
 
         if backend is None:
             backend = active_backend
         elif isinstance(backend, ParallelBackendBase):
             # Use provided backend as is
             pass
-        elif hasattr(backend, 'Pool') and hasattr(backend, 'Lock'):
+        elif hasattr(backend, "Pool") and hasattr(backend, "Lock"):
             # Make it possible to pass a custom multiprocessing context as
             # backend to change the start method to forkserver or spawn or
             # preload modules on the forkserver helper process.
-            self._backend_args['context'] = backend
+            self._backend_args["context"] = backend
             backend = MultiprocessingBackend()
         else:
             try:
                 backend_factory = BACKENDS[backend]
             except KeyError:
-                raise ValueError("Invalid backend: %s, expected one of %r"
-                                 % (backend, sorted(BACKENDS.keys())))
+                raise ValueError(
+                    "Invalid backend: %s, expected one of %r"
+                    % (backend, sorted(BACKENDS.keys()))
+                )
             backend = backend_factory()
 
-        if (batch_size == 'auto' or isinstance(batch_size, Integral) and
-                batch_size > 0):
+        if (
+            batch_size == "auto"
+            or isinstance(batch_size, Integral)
+            and batch_size > 0
+        ):
             self.batch_size = batch_size
         else:
             raise ValueError(
                 "batch_size must be 'auto' or a positive integer, got: %r"
-                % batch_size)
+                % batch_size
+            )
 
         self._backend = backend
         self._output = None
@@ -547,15 +573,17 @@ class Parallel(Logger):
     def _initialize_backend(self):
         """Build a process or thread pool and return the number of workers"""
         try:
-            n_jobs = self._backend.configure(n_jobs=self.n_jobs, parallel=self,
-                                             **self._backend_args)
+            n_jobs = self._backend.configure(
+                n_jobs=self.n_jobs, parallel=self, **self._backend_args
+            )
             if self.timeout is not None and not self._backend.supports_timeout:
                 warnings.warn(
-                    'The backend class {!r} does not support timeout. '
+                    "The backend class {!r} does not support timeout. "
                     "You have set 'timeout={}' in Parallel but "
                     "the 'timeout' parameter will not be used.".format(
-                        self._backend.__class__.__name__,
-                        self.timeout))
+                        self._backend.__class__.__name__, self.timeout
+                    )
+                )
 
         except FallbackToBackend as e:
             # Recursively initialize the backend in case of requested fallback.
@@ -614,7 +642,7 @@ class Parallel(Logger):
         lock so calling this function should be thread safe.
 
         """
-        if self.batch_size == 'auto':
+        if self.batch_size == "auto":
             batch_size = self._backend.compute_batch_size()
         else:
             # Fixed batch size strategy
@@ -640,11 +668,11 @@ class Parallel(Logger):
         else:
             writer = sys.stdout.write
         msg = msg % msg_args
-        writer('[%s]: %s\n' % (self, msg))
+        writer("[%s]: %s\n" % (self, msg))
 
     def print_progress(self):
         """Display the process of the parallel execution only a fraction
-           of time, controlled by self.verbose.
+        of time, controlled by self.verbose.
         """
         if not self.verbose:
             return
@@ -658,9 +686,13 @@ class Parallel(Logger):
         if self._original_iterator is not None:
             if _verbosity_filter(self.n_dispatched_batches, self.verbose):
                 return
-            self._print('Done %3i tasks      | elapsed: %s',
-                        (self.n_completed_tasks,
-                         short_format_time(elapsed_time), ))
+            self._print(
+                "Done %3i tasks      | elapsed: %s",
+                (
+                    self.n_completed_tasks,
+                    short_format_time(elapsed_time),
+                ),
+            )
         else:
             index = self.n_completed_tasks
             # We are finished dispatching
@@ -669,21 +701,24 @@ class Parallel(Logger):
             if not index == 0:
                 # Display depending on the number of remaining items
                 # A message as soon as we finish dispatching, cursor is 0
-                cursor = (total_tasks - index + 1 -
-                          self._pre_dispatch_amount)
+                cursor = total_tasks - index + 1 - self._pre_dispatch_amount
                 frequency = (total_tasks // self.verbose) + 1
-                is_last_item = (index + 1 == total_tasks)
-                if (is_last_item or cursor % frequency):
+                is_last_item = index + 1 == total_tasks
+                if is_last_item or cursor % frequency:
                     return
-            remaining_time = (elapsed_time / index) * \
-                             (self.n_dispatched_tasks - index * 1.0)
+            remaining_time = (elapsed_time / index) * (
+                self.n_dispatched_tasks - index * 1.0
+            )
             # only display status if remaining time is greater or equal to 0
-            self._print('Done %3i out of %3i | elapsed: %s remaining: %s',
-                        (index,
-                         total_tasks,
-                         short_format_time(elapsed_time),
-                         short_format_time(remaining_time),
-                         ))
+            self._print(
+                "Done %3i out of %3i | elapsed: %s remaining: %s",
+                (
+                    index,
+                    total_tasks,
+                    short_format_time(elapsed_time),
+                    short_format_time(remaining_time),
+                ),
+            )
 
     def retrieve(self):
         self._output = list()
@@ -699,7 +734,7 @@ class Parallel(Logger):
                 job = self._jobs.pop(0)
 
             try:
-                if getattr(self._backend, 'supports_timeout', False):
+                if getattr(self._backend, "supports_timeout", False):
                     self._output.extend(job.get(timeout=self.timeout))
                 else:
                     self._output.extend(job.get())
@@ -716,8 +751,9 @@ class Parallel(Logger):
                 # the exception we got back to the caller instead of returning
                 # any result.
                 backend = self._backend
-                if (backend is not None and
-                        hasattr(backend, 'abort_everything')):
+                if backend is not None and hasattr(
+                    backend, "abort_everything"
+                ):
                     # If the backend is managed externally we need to make sure
                     # to leave it in a working state to allow for future jobs
                     # scheduling.
@@ -729,14 +765,18 @@ class Parallel(Logger):
                 else:
                     # Capture exception to add information on the local
                     # stack in addition to the distant stack
-                    this_report = format_outer_frames(context=10,
-                                                      stack_start=1)
+                    this_report = format_outer_frames(
+                        context=10, stack_start=1
+                    )
                     report = """Multiprocessing exception:
 %s
 ---------------------------------------------------------------------------
 Sub-process traceback:
 ---------------------------------------------------------------------------
-%s""" % (this_report, exception.message)
+%s""" % (
+                        this_report,
+                        exception.message,
+                    )
                     # Convert this to a JoblibException
                     exception_type = _mk_exception(exception.etype)[0]
                     exception = exception_type(report)
@@ -745,7 +785,7 @@ Sub-process traceback:
 
     def __call__(self, iterable):
         if self._jobs:
-            raise ValueError('This Parallel instance is already running')
+            raise ValueError("This Parallel instance is already running")
         # A flag used to abort the dispatching of jobs in case an
         # exception is found
         self._aborting = False
@@ -757,13 +797,13 @@ Sub-process traceback:
         iterator = iter(iterable)
         pre_dispatch = self.pre_dispatch
 
-        if pre_dispatch == 'all' or n_jobs == 1:
+        if pre_dispatch == "all" or n_jobs == 1:
             # prevent further dispatch via multiprocessing callback thread
             self._original_iterator = None
             self._pre_dispatch_amount = 0
         else:
             self._original_iterator = iterator
-            if hasattr(pre_dispatch, 'endswith'):
+            if hasattr(pre_dispatch, "endswith"):
                 pre_dispatch = eval(pre_dispatch)
             self._pre_dispatch_amount = pre_dispatch = int(pre_dispatch)
 
@@ -793,9 +833,14 @@ Sub-process traceback:
             self.retrieve()
             # Make sure that we get a last message telling us we are done
             elapsed_time = time.time() - self._start_time
-            self._print('Done %3i out of %3i | elapsed: %s finished',
-                        (len(self._output), len(self._output),
-                         short_format_time(elapsed_time)))
+            self._print(
+                "Done %3i out of %3i | elapsed: %s finished",
+                (
+                    len(self._output),
+                    len(self._output),
+                    short_format_time(elapsed_time),
+                ),
+            )
         finally:
             if not self._managed_backend:
                 self._terminate_backend()
@@ -805,4 +850,4 @@ Sub-process traceback:
         return output
 
     def __repr__(self):
-        return '%s(n_jobs=%s)' % (self.__class__.__name__, self.n_jobs)
+        return "%s(n_jobs=%s)" % (self.__class__.__name__, self.n_jobs)

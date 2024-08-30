@@ -5,7 +5,6 @@ Exception handling classes.
 
 
 class NotFittedError(ValueError, AttributeError):
-
     """Error class for an ensemble or estimator that is not fitted yet
 
     Raised when some method has been called that expects the instance to be
@@ -14,7 +13,6 @@ class NotFittedError(ValueError, AttributeError):
 
 
 class NotInitializedError(ValueError, AttributeError):
-
     """Error class for an instance that has not been properly initialized.
 
     Raised when required methods and attributes have not been initialized.
@@ -22,12 +20,10 @@ class NotInitializedError(ValueError, AttributeError):
 
 
 class FitFailedWarning(RuntimeWarning):
-
     """Warning for a failed estimator 'fit' call."""
 
 
 class ParameterChangeWarning(UserWarning):
-
     """Warning for different params in blueprint estimator and fitted copy.
 
     .. versionadded:: 0.2.2
@@ -35,12 +31,10 @@ class ParameterChangeWarning(UserWarning):
 
 
 class LayerSpecificationError(TypeError, ValueError):
-
     """Error class for incorrectly specified layers."""
 
 
 class LayerSpecificationWarning(UserWarning):
-
     """Warning class if layer has been specified in a dubious form.
 
     This warning is raised when the input does not look like expected, but
@@ -49,7 +43,6 @@ class LayerSpecificationWarning(UserWarning):
 
 
 class ParallelProcessingError(AttributeError, RuntimeError):
-
     """Error class for fatal errors related to :class:`ParallelProcessing`.
 
     Can be subclassed for more specific error classes.
@@ -57,7 +50,6 @@ class ParallelProcessingError(AttributeError, RuntimeError):
 
 
 class ParallelProcessingWarning(UserWarning):
-
     """Warnings related to methods on :class:`ParallelProcessing`.
 
     Can be subclassed for more specific warning classes.
@@ -65,7 +57,6 @@ class ParallelProcessingWarning(UserWarning):
 
 
 class InputDataWarning(UserWarning):
-
     """Warning used to notify that an array does not behave as expected.
 
     Raised if data looks suspicious, but not outright fatal. Used sparingly,
@@ -76,7 +67,6 @@ class InputDataWarning(UserWarning):
 
 
 class MetricWarning(UserWarning):
-
     """Warning to notify that scoring do not behave as expected.
 
     Raised if scoring fails or if aggregating scores fails.
@@ -85,12 +75,10 @@ class MetricWarning(UserWarning):
 
 ###############################################################################
 class DeprecationWarning(UserWarning):
-
     """Warning to notify the user of a deprecated feature"""
 
 
 class EfficiencyWarning(UserWarning):
-
     """Warning used to notify the user of inefficient computation.
 
     This warning notifies the user that the efficiency may not be optimal due
@@ -104,7 +92,6 @@ class EfficiencyWarning(UserWarning):
 
 
 class NonBLASDotWarning(EfficiencyWarning):
-
     """Warning used when the dot operation does not use BLAS.
 
     FROM SCIKIT-LEARN
@@ -120,7 +107,6 @@ class NonBLASDotWarning(EfficiencyWarning):
 
 
 class DataConversionWarning(UserWarning):
-
     """Warning used to notify implicit data conversions happening in the code.
 
     This warning occurs when some input data needs to be converted or

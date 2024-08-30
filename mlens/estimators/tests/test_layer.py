@@ -2,6 +2,7 @@
 
 Test classes.
 """
+
 import numpy as np
 from mlens.index import FullIndex, FoldIndex
 from mlens.testing import Data
@@ -9,28 +10,33 @@ from mlens.testing.dummy import ESTIMATORS, PREPROCESSING
 from mlens.utils.dummy import OLS, Scale
 from mlens.utils.exceptions import NotFittedError, ParameterChangeWarning
 from mlens.parallel import make_group
-from mlens.estimators import LearnerEstimator, TransformerEstimator, LayerEnsemble
+from mlens.estimators import (
+    LearnerEstimator,
+    TransformerEstimator,
+    LayerEnsemble,
+)
 from mlens.externals.sklearn.base import clone
 
 try:
     from sklearn.utils.estimator_checks import check_estimator
     from sklearn.utils.validation import check_X_y, check_array
+
     run_sklearn = True
 except ImportError:
     check_estimator = None
     run_sklearn = False
 
-data = Data('stack', False, True)
+data = Data("stack", False, True)
 X, y = data.get_data((25, 4), 3)
 (F, wf), (P, wp) = data.ground_truth(X, y)
 
 Est = LayerEnsemble
-est = LayerEnsemble(make_group(FoldIndex(), ESTIMATORS, PREPROCESSING),
-                    dtype=np.float64)
+est = LayerEnsemble(
+    make_group(FoldIndex(), ESTIMATORS, PREPROCESSING), dtype=np.float64
+)
 
 
 class Tmp(Est):
-
     """Temporary class
 
     Wrapper to get full estimator on no-args instantiation. For compatibility
@@ -38,10 +44,13 @@ class Tmp(Est):
     """
 
     def __init__(self):
-        args = {LearnerEstimator: (OLS(), FullIndex()),
-                LayerEnsemble: (make_group(
-                    FullIndex(), ESTIMATORS, PREPROCESSING),),
-                TransformerEstimator: (Scale(), FullIndex())}[Est]
+        args = {
+            LearnerEstimator: (OLS(), FullIndex()),
+            LayerEnsemble: (
+                make_group(FullIndex(), ESTIMATORS, PREPROCESSING),
+            ),
+            TransformerEstimator: (Scale(), FullIndex()),
+        }[Est]
         super(Tmp, self).__init__(*args)
 
     __init__.deprecated_original = __init__
@@ -65,6 +74,7 @@ class Tmp(Est):
 
 # These are simple run tests to ensure parallel wrapper register backend.
 # See parallel for more rigorous tests
+
 
 def test_layer_fit():
     """[Module | LayerEstimator] test fit"""
@@ -102,7 +112,7 @@ def test_layer_params_estimator():
     out = est.get_params()
     assert isinstance(out, dict)
 
-    est.set_params(**{'offs-1__estimator__offset': 10})
+    est.set_params(**{"offs-1__estimator__offset": 10})
     np.testing.assert_warns(ParameterChangeWarning, est.predict, X)
 
 
@@ -110,7 +120,7 @@ def test_layer_params_indexer():
     """[Module | LayerEnsemble] test set params on indexer"""
     est.fit(X, y)
 
-    est.set_params(**{'null-1__indexer__folds': 3})
+    est.set_params(**{"null-1__indexer__folds": 3})
     np.testing.assert_warns(ParameterChangeWarning, est.predict, X)
 
 
@@ -129,6 +139,7 @@ def test_layer_attr():
 
 
 if run_sklearn:
+
     def test_layer():
         """[Module | LayerEnsemble] test pass estimator checks"""
         check_estimator(Tmp)

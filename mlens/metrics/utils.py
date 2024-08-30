@@ -6,12 +6,14 @@
 
 Utility functions for constructing metrics
 """
+
 from __future__ import division
 
 import warnings
 import numpy as np
 
 from ..utils.exceptions import MetricWarning
+
 try:
     from collections import OrderedDict as _dict
 except ImportError:
@@ -21,7 +23,7 @@ except ImportError:
 def _get_string(obj, dec):
     """Stringify object"""
     try:
-        return '{0:.{dec}f}'.format(obj, dec=dec)
+        return "{0:.{dec}f}".format(obj, dec=dec)
     except (TypeError, ValueError):
         return obj.__str__()
 
@@ -29,31 +31,30 @@ def _get_string(obj, dec):
 def _get_partitions(obj):
     """Check if any entry has partitions"""
     for name, _ in obj:
-        if int(name.split('.')[-2]) > 0:
+        if int(name.split(".")[-2]) > 0:
             return True
     return False
 
 
-def _split(f, s, a_p='', a_s='', b_p='', b_s='', reverse=False):
+def _split(f, s, a_p="", a_s="", b_p="", b_s="", reverse=False):
     """Split string on a symbol and return two string, first possible empty"""
     splitted = f.split(s)
     if len(splitted) == 1:
-        a, b = '', splitted[0]
+        a, b = "", splitted[0]
         if reverse:
             b, a = a, b
     else:
         a, b = splitted
 
     if a:
-        a = '%s%s%s' % (a_p, a, a_s)
+        a = "%s%s%s" % (a_p, a, a_s)
     if b:
-        b = '%s%s%s' % (b_p, b, b_s)
+        b = "%s%s%s" % (b_p, b, b_s)
 
     return a, b
 
 
 class Data(_dict):
-
     """Wrapper class around dict to get pretty prints
 
     :class:`Data` is an ordered dictionary that implements a dedicated
@@ -117,7 +118,7 @@ def assemble_table(data, padding=2, decimals=2):
     row-idx-1  row-idx-2          0.10        0.00        0.10        0.00
     """
     buffer = 0
-    row_glossary = ['layer', 'case', 'est', 'part']
+    row_glossary = ["layer", "case", "est", "part"]
 
     cols = list()
     rows = list()
@@ -145,13 +146,13 @@ def assemble_table(data, padding=2, decimals=2):
                 # Already mapped row entry name
                 continue
 
-            layer, k = _split(dat_key, '/')
-            case, k = _split(k, '.')
-            est, part = _split(k, '--', reverse=True)
+            layer, k = _split(dat_key, "/")
+            case, k = _split(k, ".")
+            est, part = _split(k, "--", reverse=True)
 
             # Header space before column headings
-            items = [i for i in [layer, case, est, part] if i != '']
-            buffer = max(buffer, len('  '.join(items)))
+            items = [i for i in [layer, case, est, part] if i != ""]
+            buffer = max(buffer, len("  ".join(items)))
 
             for k, v in zip(row_glossary, [layer, case, est, part]):
                 v_ = len(v)
@@ -159,10 +160,10 @@ def assemble_table(data, padding=2, decimals=2):
                     max_row_len[k] = v_
 
             dat = _dict()
-            dat['layer'] = layer
-            dat['case'] = case
-            dat['est'] = est
-            dat['part'] = part
+            dat["layer"] = layer
+            dat["case"] = case
+            dat["est"] = est
+            dat["part"] = part
             row_keys.append(dat_key)
             rows.append(dat)
 
@@ -230,32 +231,32 @@ def assemble_data(data_list):
         if not data_dict:
             continue
 
-        prefix, name = _split(name, '/', a_s='/')
+        prefix, name = _split(name, "/", a_s="/")
 
         # Names are either est.i.j or case.est.i.j
-        splitted = name.split('.')
+        splitted = name.split(".")
         if partitions:
             name = tuple(splitted[:-1])
 
             if len(name) == 3:
-                name = '%s.%s--%s' % name
+                name = "%s.%s--%s" % name
             else:
-                name = '%s--%s' % name
+                name = "%s--%s" % name
         else:
-            name = '.'.join(splitted[:-2])
+            name = ".".join(splitted[:-2])
 
-        name = '%s%s' % (prefix, name)
+        name = "%s%s" % (prefix, name)
 
         if name not in tmp:
             # Set up data struct for name
             tmp[name] = _dict()
             for k in data_dict.keys():
                 tmp[name][k] = list()
-                if '%s-m' % k not in data:
-                    data['%s-m' % k] = _dict()
-                    data['%s-s' % k] = _dict()
-                data['%s-m' % k][name] = list()
-                data['%s-s' % k][name] = list()
+                if "%s-m" % k not in data:
+                    data["%s-m" % k] = _dict()
+                    data["%s-s" % k] = _dict()
+                data["%s-m" % k][name] = list()
+                data["%s-s" % k][name] = list()
 
         # collect all data dicts belonging to name
         for k, v in data_dict.items():
@@ -270,12 +271,14 @@ def assemble_data(data_list):
                 # Purge None values from the main est due to no predict times
                 v = [i for i in v if i is not None]
                 if v:
-                    data['%s-m' % k][name] = np.mean(v)
-                    data['%s-s' % k][name] = np.std(v)
+                    data["%s-m" % k][name] = np.mean(v)
+                    data["%s-s" % k][name] = np.std(v)
             except Exception as exc:
                 warnings.warn(
                     "Aggregating data for %s failed. Raw data:\n%r\n"
-                    "Details: %r" % (k, v, exc), MetricWarning)
+                    "Details: %r" % (k, v, exc),
+                    MetricWarning,
+                )
 
     # Check if there are empty columns
     discard = list()

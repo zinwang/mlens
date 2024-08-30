@@ -21,7 +21,7 @@ import numpy as np
 
 
 def is_multilabel(y):
-    """ Check if ``y`` is in a multilabel format.
+    """Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
@@ -48,7 +48,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__'):
+    if hasattr(y, "__array__"):
         y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -56,18 +56,25 @@ def is_multilabel(y):
     if issparse(y):
         if isinstance(y, (dok_matrix, lil_matrix)):
             y = y.tocsr()
-        return (len(y.data) == 0 or np.unique(y.data).size == 1 and
-                (y.dtype.kind in 'biu' or  # bool, int, uint
-                 _is_integral_float(np.unique(y.data))))
+        return (
+            len(y.data) == 0
+            or np.unique(y.data).size == 1
+            and (
+                y.dtype.kind in "biu"  # bool, int, uint
+                or _is_integral_float(np.unique(y.data))
+            )
+        )
     else:
         labels = np.unique(y)
 
-        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
-                                    _is_integral_float(labels))
+        return len(labels) < 3 and (
+            y.dtype.kind in "biu"  # bool, int, uint
+            or _is_integral_float(labels)
+        )
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == 'f' and np.all(y.astype(int) == y)
+    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
 
 
 def type_of_target(y):
@@ -124,41 +131,50 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    valid = ((isinstance(y, (Sequence, spmatrix)) or
-             hasattr(y, '__array__')) and not isinstance(y, string_types))
+    valid = (
+        isinstance(y, (Sequence, spmatrix)) or hasattr(y, "__array__")
+    ) and not isinstance(y, string_types)
 
     if not valid:
-        raise ValueError('Expected array-like (array or non-string sequence), '
-                         'got %r' % y)
+        raise ValueError(
+            "Expected array-like (array or non-string sequence), " "got %r" % y
+        )
 
     if is_multilabel(y):
-        return 'multilabel-indicator'
+        return "multilabel-indicator"
 
     try:
         y = np.asarray(y)
     except ValueError:
         # Known to fail in numpy 1.3 for array of arrays
-        return 'unknown'
+        return "unknown"
 
     # The old sequence of sequences format
     try:
-        if (not hasattr(y[0], '__array__') and
-                isinstance(y[0], Sequence) and not
-                isinstance(y[0], string_types)):
-            raise ValueError('You appear to be using a legacy multi-label data'
-                             ' representation. Sequence of sequences are no'
-                             ' longer supported; use a binary array or sparse'
-                             ' matrix instead.')
+        if (
+            not hasattr(y[0], "__array__")
+            and isinstance(y[0], Sequence)
+            and not isinstance(y[0], string_types)
+        ):
+            raise ValueError(
+                "You appear to be using a legacy multi-label data"
+                " representation. Sequence of sequences are no"
+                " longer supported; use a binary array or sparse"
+                " matrix instead."
+            )
     except IndexError:
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], string_types)):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if y.ndim > 2 or (
+        y.dtype == object
+        and len(y)
+        and not isinstance(y.flat[0], string_types)
+    ):
+        return "unknown"  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
-        return 'unknown'  # [[]]
+        return "unknown"  # [[]]
 
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
@@ -166,11 +182,11 @@ def type_of_target(y):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # check float and contains non-integer float values
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+    if y.dtype.kind == "f" and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        return 'continuous' + suffix
+        return "continuous" + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
-        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+        return "multiclass" + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
     else:
-        return 'binary'  # [1, 2] or [["a"], ["b"]]
+        return "binary"  # [1, 2] or [["a"], ["b"]]

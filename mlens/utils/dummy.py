@@ -31,7 +31,6 @@ except ImportError:
 
 
 class OLS(BaseEstimator):
-
     """No frills vanilla OLS estimator implemented through the normal equation.
 
     MWE of a Scikit-learn estimator.
@@ -78,7 +77,7 @@ class OLS(BaseEstimator):
 
     def fit(self, X, y):
         """Fit coefficient vector."""
-        X, y = check_X_y(X, y, dtype='float64')
+        X, y = check_X_y(X, y, dtype="float64")
         y = np.asarray(y, dtype=X.dtype)
 
         O = np.linalg.lstsq(X, y, rcond=None)
@@ -90,7 +89,7 @@ class OLS(BaseEstimator):
 
     def predict(self, X):
         """Predict with fitted weights."""
-        if not hasattr(self, 'coef_'):
+        if not hasattr(self, "coef_"):
             raise NotFittedError("Estimator not fitted. Call 'fit' first.")
 
         X = check_array(X, accept_sparse=False)
@@ -99,7 +98,6 @@ class OLS(BaseEstimator):
 
 
 class LogisticRegression(OLS):
-
     """No frill Logistic Regressor w. one-vs-rest estimation of P(label).
 
     MWE of a Scikit-learn classifier.
@@ -160,7 +158,7 @@ class LogisticRegression(OLS):
 
     def predict_proba(self, X):
         """Get probability predictions."""
-        if not hasattr(self, '_models_'):
+        if not hasattr(self, "_models_"):
             raise NotFittedError("Estimator not fitted. Call 'fit' first.")
 
         X = check_array(X, accept_sparse=False)
@@ -168,7 +166,7 @@ class LogisticRegression(OLS):
         preds = []
         for m in self._models_:
 
-            p = 1 / (1 + np.exp(- m.predict(X)))
+            p = 1 / (1 + np.exp(-m.predict(X)))
 
             preds.append(p)
 
@@ -176,7 +174,7 @@ class LogisticRegression(OLS):
 
     def predict(self, X):
         """Get label predictions."""
-        if not hasattr(self, '_models_'):
+        if not hasattr(self, "_models_"):
             raise NotFittedError("Estimator not fitted. Call 'fit' first.")
 
         X = check_array(X, accept_sparse=False)
@@ -191,7 +189,6 @@ class LogisticRegression(OLS):
 
 
 class Scale(BaseEstimator, TransformerMixin):
-
     """Removes the a learnt mean in a column-wise manner in an array.
 
     MWE of a Scikit-learn transformer, to be used for unit-tests of ensemble

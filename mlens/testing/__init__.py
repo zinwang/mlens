@@ -6,20 +6,23 @@
 
 Testing objects
 """
-from .dummy import (Data,
-                    EstimatorContainer,
-                    run_learner,
-                    get_learner,
-                    get_layer,
-                    run_layer,
-                    InitMixin,
-                    )
 
-__all__ = ['Data',
-           'EstimatorContainer',
-           'get_learner',
-           'run_learner',
-           'get_layer',
-           'run_layer',
-           'InitMixin'
-           ]
+from .dummy import (
+    Data,
+    EstimatorContainer,
+    run_learner,
+    get_learner,
+    get_layer,
+    run_layer,
+    InitMixin,
+)
+
+__all__ = [
+    "Data",
+    "EstimatorContainer",
+    "get_learner",
+    "run_learner",
+    "get_layer",
+    "run_layer",
+    "InitMixin",
+]

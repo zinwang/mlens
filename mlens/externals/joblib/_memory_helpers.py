@@ -7,6 +7,7 @@ except ImportError:
     from codecs import lookup, BOM_UTF8
     import re
     from io import TextIOWrapper, open
+
     cookie_re = re.compile(r"coding[:=]\s*([-\w.]+)")
 
     def _get_normal_name(orig_enc):
@@ -15,8 +16,9 @@ except ImportError:
         enc = orig_enc[:12].lower().replace("_", "-")
         if enc == "utf-8" or enc.startswith("utf-8-"):
             return "utf-8"
-        if enc in ("latin-1", "iso-8859-1", "iso-latin-1") or \
-           enc.startswith(("latin-1-", "iso-8859-1-", "iso-latin-1-")):
+        if enc in ("latin-1", "iso-8859-1", "iso-latin-1") or enc.startswith(
+            ("latin-1-", "iso-8859-1-", "iso-latin-1-")
+        ):
             return "iso-8859-1"
         return orig_enc
 
@@ -40,17 +42,17 @@ except ImportError:
         """
         bom_found = False
         encoding = None
-        default = 'utf-8'
+        default = "utf-8"
 
         def read_or_stop():
             try:
                 return readline()
             except StopIteration:
-                return b''
+                return b""
 
         def find_cookie(line):
             try:
-                line_string = line.decode('ascii')
+                line_string = line.decode("ascii")
             except UnicodeDecodeError:
                 return None
 
@@ -65,17 +67,17 @@ except ImportError:
                 raise SyntaxError("unknown encoding: " + encoding)
 
             if bom_found:
-                if codec.name != 'utf-8':
+                if codec.name != "utf-8":
                     # This behaviour mimics the Python interpreter
-                    raise SyntaxError('encoding problem: utf-8')
-                encoding += '-sig'
+                    raise SyntaxError("encoding problem: utf-8")
+                encoding += "-sig"
             return encoding
 
         first = read_or_stop()
         if first.startswith(BOM_UTF8):
             bom_found = True
             first = first[3:]
-            default = 'utf-8-sig'
+            default = "utf-8-sig"
         if not first:
             return default, []
 
@@ -97,9 +99,9 @@ except ImportError:
         """Open a file in read only mode using the encoding detected by
         detect_encoding().
         """
-        buffer = open(filename, 'rb')
+        buffer = open(filename, "rb")
         encoding, lines = _detect_encoding(buffer.readline)
         buffer.seek(0)
         text = TextIOWrapper(buffer, encoding, line_buffering=True)
-        text.mode = 'r'
+        text.mode = "r"
         return text

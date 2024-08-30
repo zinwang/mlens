@@ -6,6 +6,7 @@
 
 Temporal (time series) indexing.
 """
+
 from __future__ import division
 
 from numbers import Integral
@@ -16,7 +17,6 @@ from ._checks import check_temporal_index
 
 
 class TemporalIndex(BaseIndex):
-
     """Indexer that generates time series fold over ``X``.
 
     Sequential iterator that generates fold index tuples that preserve
@@ -99,7 +99,15 @@ class TemporalIndex(BaseIndex):
     No overlap between train set and test set.
     """
 
-    def __init__(self, step_size=1, burn_in=None, window=None, lag=0, X=None, raise_on_exception=True):
+    def __init__(
+        self,
+        step_size=1,
+        burn_in=None,
+        window=None,
+        lag=0,
+        X=None,
+        raise_on_exception=True,
+    ):
         super(TemporalIndex, self).__init__()
         self.step_size = step_size
         self.burn_in = burn_in if burn_in is not None else step_size
@@ -128,8 +136,13 @@ class TemporalIndex(BaseIndex):
         """
         self.n_samples = X.shape[0]
         check_temporal_index(
-            self.burn_in, self.step_size, self.window,
-            self.lag, self.n_samples, self.raise_on_exception)
+            self.burn_in,
+            self.step_size,
+            self.window,
+            self.lag,
+            self.n_samples,
+            self.raise_on_exception,
+        )
         self.n_test_samples = self.n_samples - self.burn_in
         self.__fitted__ = True
         return self

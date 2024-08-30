@@ -17,8 +17,11 @@ try:
     from pandas import DataFrame, Series
 except ImportError:
     DataFrame = Series = None
-    warnings.warn("Pandas not installed. Visualization module may not work "
-                  "as intended.", ImportWarning)
+    warnings.warn(
+        "Pandas not installed. Visualization module may not work "
+        "as intended.",
+        ImportWarning,
+    )
 
 try:
     import matplotlib.pyplot as plt
@@ -27,13 +30,22 @@ try:
     from matplotlib.colors import ListedColormap
     from seaborn import color_palette
 except:
-    warnings.warn("Matplotlib and Seaborn not installed. Cannot load "
-                  "visualization module.", ImportWarning)
+    warnings.warn(
+        "Matplotlib and Seaborn not installed. Cannot load "
+        "visualization module.",
+        ImportWarning,
+    )
 
 
-def pca_comp_plot(X, y=None, figsize=(10, 8),
-                  title='Principal Components Comparison', title_font_size=14,
-                  show=True, **kwargs):
+def pca_comp_plot(
+    X,
+    y=None,
+    figsize=(10, 8),
+    title="Principal Components Comparison",
+    title_font_size=14,
+    show=True,
+    **kwargs
+):
     """Function for comparing PCA analysis.
 
     Function compares across 2 and 3 dimensions and
@@ -71,7 +83,7 @@ def pca_comp_plot(X, y=None, figsize=(10, 8),
     --------
     :class:`mlens.visualization.pca_plot`
     """
-    comp = ['linear', 'rbf']
+    comp = ["linear", "rbf"]
     f = plt.figure(figsize=figsize)
 
     ax = []
@@ -81,17 +93,18 @@ def pca_comp_plot(X, y=None, figsize=(10, 8),
 
         if dim is 3:
             # Need to specify projection
-            subplot_kwarg = {'projection': '3d'}
+            subplot_kwarg = {"projection": "3d"}
 
         for i, kernel in enumerate(comp):
             # Create subplot
             ax.append(f.add_subplot(frame + i, **subplot_kwarg))
 
             # Build figure
-            ax[-1] = pca_plot(X, KernelPCA(dim, kernel), y,
-                              ax=ax[-1], show=False, **kwargs)
+            ax[-1] = pca_plot(
+                X, KernelPCA(dim, kernel), y, ax=ax[-1], show=False, **kwargs
+            )
 
-            ax[-1].set_title('%s kernel, %i dims' % (kernel, dim))
+            ax[-1].set_title("%s kernel, %i dims" % (kernel, dim))
 
             # Whiten background if dim is 3
             if dim is 3:
@@ -104,9 +117,18 @@ def pca_comp_plot(X, y=None, figsize=(10, 8),
     return ax
 
 
-def pca_plot(X, estimator, y=None, cmap=None, figsize=(10, 8),
-             title='Principal Components Analysis', title_font_size=14,
-             show=True, ax=None, **kwargs):
+def pca_plot(
+    X,
+    estimator,
+    y=None,
+    cmap=None,
+    figsize=(10, 8),
+    title="Principal Components Analysis",
+    title_font_size=14,
+    show=True,
+    ax=None,
+    **kwargs
+):
     """Function to plot a PCA analysis of 1, 2, or 3 dims.
 
     Parameters
@@ -154,10 +176,10 @@ def pca_plot(X, estimator, y=None, cmap=None, figsize=(10, 8),
     if ax is None:
         f, ax = plt.subplots(figsize=figsize)
         if estimator.n_components == 3:
-            ax = f.add_subplot(111, projection='3d')
+            ax = f.add_subplot(111, projection="3d")
 
     if cmap is None:
-        cmap = ListedColormap(color_palette('husl'))
+        cmap = ListedColormap(color_palette("husl"))
 
     if estimator.n_components == 1:
         ax.scatter(Z, c=y, cmap=cmap, **kwargs)
@@ -166,8 +188,10 @@ def pca_plot(X, estimator, y=None, cmap=None, figsize=(10, 8),
     elif estimator.n_components == 3:
         ax.scatter(Z[:, 0], Z[:, 1], Z[:, 2], c=y, cmap=cmap, **kwargs)
     else:
-        raise ValueError("'n_components' is too large to visualize. "
-                         "Set to one of [1, 2, 3].")
+        raise ValueError(
+            "'n_components' is too large to visualize. "
+            "Set to one of [1, 2, 3]."
+        )
 
     if show:
         plt.title(title, fontsize=title_font_size)
@@ -176,9 +200,18 @@ def pca_plot(X, estimator, y=None, cmap=None, figsize=(10, 8),
     return ax
 
 
-def exp_var_plot(X, estimator, figsize=(10, 8), buffer=0.01, set_labels=True,
-                 title='Explained variance ratio', title_font_size=14,
-                 show=True, ax=None, **kwargs):
+def exp_var_plot(
+    X,
+    estimator,
+    figsize=(10, 8),
+    buffer=0.01,
+    set_labels=True,
+    title="Explained variance ratio",
+    title_font_size=14,
+    show=True,
+    ax=None,
+    **kwargs
+):
     """Function to plot the explained variance using PCA.
 
     Parameters
@@ -221,7 +254,7 @@ def exp_var_plot(X, estimator, figsize=(10, 8), buffer=0.01, set_labels=True,
     ax : optional
         if ``ax`` was specified, returns ``ax`` with plot attached.
     """
-    estimator.set_params(**{'n_components': None})
+    estimator.set_params(**{"n_components": None})
     ind_var_exp = estimator.fit(X).explained_variance_ratio_
     cum_var_exp = np.cumsum(ind_var_exp)
     x = range(1, len(ind_var_exp) + 1)
@@ -237,8 +270,8 @@ def exp_var_plot(X, estimator, figsize=(10, 8), buffer=0.01, set_labels=True,
     ax.set_xticks([i for i in x])
 
     if set_labels:
-        ax.set_xlabel('Number of Components')
-        ax.set_ylabel('Explained variance ratio')
+        ax.set_xlabel("Number of Components")
+        ax.set_ylabel("Explained variance ratio")
 
     if show:
         plt.title(title, fontsize=title_font_size)
