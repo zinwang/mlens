@@ -177,8 +177,8 @@ def _reduce_memmap_backed(a, m):
     attribute ancestry of a. ``m.base`` should be the real python mmap object.
     """
     # offset that comes from the striding differences between a and m
-    a_start, a_end = np.byte_bounds(a)
-    m_start = np.byte_bounds(m)[0]
+    a_start, a_end = np.lib.array_utils.byte_bounds(a)
+    m_start = np.lib.array_utils.byte_bounds(m)[0]
     offset = a_start - m_start
 
     # offset from the backing memmap
